@@ -1,0 +1,40 @@
+Error401:
+  description: Não autenticado ou token inválido
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          message:
+            type: string
+            example: Unauthenticated.
+
+Error404:
+  description: Recurso não encontrado
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          message:
+            type: string
+            example: Not found.
+
+Error422:
+  description: Erro de validação ou credenciais inválidas
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          message:
+            type: string
+            example: The given data was invalid.
+          errors:
+            type: object
+            additionalProperties:
+              type: array
+              items:
+                type: string
+            example:
+              email: ['These credentials do not match our records.']

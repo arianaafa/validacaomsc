@@ -1,0 +1,63 @@
+User:
+  type: object
+  required: [id, name, email]
+  properties:
+    id:
+      type: integer
+      example: 1
+    name:
+      type: string
+      example: Maria Silva
+    email:
+      type: string
+      format: email
+      example: maria@example.com
+
+LoginRequest:
+  type: object
+  required: [email, password]
+  properties:
+    email:
+      type: string
+      format: email
+      example: maria@example.com
+    password:
+      type: string
+      format: password
+      example: secret123
+
+RegisterRequest:
+  type: object
+  required: [name, email, password, password_confirmation]
+  properties:
+    name:
+      type: string
+      example: Maria Silva
+    email:
+      type: string
+      format: email
+      example: maria@example.com
+    password:
+      type: string
+      format: password
+      minLength: 8
+      example: secret123
+    password_confirmation:
+      type: string
+      format: password
+      example: secret123
+
+LoginResponse:
+  type: object
+  required: [user, access_token]
+  properties:
+    user:
+      $ref: '#/User'
+    access_token:
+      type: string
+      example: 1|plainTextTokenExample
+    expires_at:
+      type: string
+      format: date-time
+      nullable: true
+      example: '2026-06-18T04:00:00+00:00'

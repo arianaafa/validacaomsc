@@ -1,0 +1,132 @@
+openapi: 3.0.3
+info:
+  title: validaMSC API
+  description: API REST do validaMSC para validação de MSC.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api
+    description: Ambiente local
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [Sistema]
+      summary: Verifica saúde da API
+      security: []
+      responses:
+        '200':
+          description: API operacional
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  app:
+                    type: string
+                  database:
+                    type: string
+
+  /login:
+    post:
+      tags: [Autenticação]
+      summary: Autentica usuário e emite token de acesso
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/schemas.yaml#/LoginRequest'
+      responses:
+        '200':
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas.yaml#/LoginResponse'
+        '422':
+          $ref: './components/responses.yaml#/Error422'
+
+  /register:
+    post:
+      tags: [Autenticação]
+      summary: Registra novo usuário e emite token de acesso
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/schemas.yaml#/RegisterRequest'
+      responses:
+        '201':
+          description: Usuário registrado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas.yaml#/LoginResponse'
+        '422':
+          $ref: './components/responses.yaml#/Error422'
+
+  /logout:
+    post:
+      tags: [Autenticação]
+      summary: Revoga o token de acesso atual
+      responses:
+        '200':
+          description: Logout realizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logout realizado com sucesso.
+        '401':
+          $ref: './components/responses.yaml#/Error401'
+
+  /refresh:
+    post:
+      tags: [Autenticação]
+      summary: Revoga o token atual e emite um novo access token
+      responses:
+        '200':
+          description: Token renovado
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas.yaml#/LoginResponse'
+        '401':
+          $ref: './components/responses.yaml#/Error401'
+
+  /me:
+    get:
+      tags: [Autenticação]
+      summary: Retorna o usuário autenticado
+      responses:
+        '200':
+          description: Dados do usuário autenticado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: './components/schemas.yaml#/User'
+        '401':
+          $ref: './components/responses.yaml#/Error401'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
