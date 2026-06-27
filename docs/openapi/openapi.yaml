@@ -124,6 +124,42 @@ paths:
         '401':
           $ref: './components/responses.yaml#/Error401'
 
+  /msc/uploads:
+    post:
+      tags: [MSC]
+      summary: Envia planilha MSC para validação
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, periodo, tipo_msc]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Arquivo CSV ou TXT (máx. 40MB)
+                periodo:
+                  type: string
+                  pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+                  example: '2026-05'
+                tipo_msc:
+                  type: string
+                  enum: [agregada, estendida]
+                  example: agregada
+      responses:
+        '201':
+          description: Upload registrado e processado
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas.yaml#/MscUploadResponse'
+        '401':
+          $ref: './components/responses.yaml#/Error401'
+        '422':
+          $ref: './components/responses.yaml#/Error422'
+
 components:
   securitySchemes:
     bearerAuth:

@@ -61,3 +61,42 @@ LoginResponse:
       format: date-time
       nullable: true
       example: '2026-06-18T04:00:00+00:00'
+
+MscUpload:
+  type: object
+  required: [id, filename, hash, status, periodo, tipo_msc]
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440000
+    filename:
+      type: string
+      example: msc-2026-05.csv
+    hash:
+      type: string
+      example: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    status:
+      type: string
+      enum: [processando, sucesso, erro_validacao, falha]
+      example: sucesso
+    periodo:
+      type: string
+      pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+      example: '2026-05'
+    tipo_msc:
+      type: string
+      enum: [agregada, estendida]
+      example: agregada
+    created_at:
+      type: string
+      format: date-time
+      nullable: true
+      example: '2026-06-27T12:00:00+00:00'
+
+MscUploadResponse:
+  type: object
+  required: [upload]
+  properties:
+    upload:
+      $ref: '#/MscUpload'

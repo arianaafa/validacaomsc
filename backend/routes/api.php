@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Auth\RefreshTokenController;
 use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Http\Controllers\MscUploadController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -24,4 +25,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/me', MeController::class);
     Route::post('/logout', LogoutController::class);
     Route::post('/refresh', RefreshTokenController::class);
+
+    Route::post('/msc/uploads', [MscUploadController::class, 'store']);
 });

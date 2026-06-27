@@ -1,0 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\MscTipo;
+use App\Enums\MscUploadStatus;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+final class MscUpload extends Model
+{
+    use HasUuids;
+
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'user_id',
+        'filename',
+        'hash',
+        'status',
+        'periodo',
+        'tipo_msc',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'status' => MscUploadStatus::class,
+            'tipo_msc' => MscTipo::class,
+        ];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return HasMany<MscValidationError, $this>
+     */
+    public function validationErrors(): HasMany
+    {
+        return $this->hasMany(MscValidationError::class);
+    }
+}
