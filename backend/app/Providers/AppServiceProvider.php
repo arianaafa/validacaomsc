@@ -12,6 +12,7 @@ use App\Services\Msc\Rules\D1_00025Rule;
 use App\Services\Msc\Rules\D1_00027Rule;
 use App\Services\Msc\Rules\D1_00028Rule;
 use App\Services\Msc\Rules\D1_ContinuidadeSaldoRule;
+use App\Services\Msc\Rules\D1_OrcamentariaContinuidadeRule;
 use App\Services\Msc\Rules\D1_PatrimonialContinuidadeRule;
 use Illuminate\Support\ServiceProvider;
 
@@ -36,6 +37,12 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(D1_OrcamentariaContinuidadeRule::class, static function ($app): D1_OrcamentariaContinuidadeRule {
+            return new D1_OrcamentariaContinuidadeRule(
+                $app->make(SiconfiClient::class),
+            );
+        });
+
         $this->app->singleton(MscLineValidator::class, static function ($app): MscLineValidator {
             return new MscLineValidator([
                 new D1_00017Rule(),
@@ -44,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
                 new D1_00027Rule(),
                 new D1_00028Rule(),
                 $app->make(D1_PatrimonialContinuidadeRule::class),
+                $app->make(D1_OrcamentariaContinuidadeRule::class),
                 $app->make(D1_ContinuidadeSaldoRule::class),
             ]);
         });

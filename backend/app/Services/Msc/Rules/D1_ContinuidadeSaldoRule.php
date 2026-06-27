@@ -117,7 +117,7 @@ final class D1_ContinuidadeSaldoRule implements MscStatefulRuleInterface
 
         $classeConta = $this->resolveClasseConta($lineData->conta);
 
-        if ($classeConta === null || $classeConta <= 4) {
+        if ($classeConta === null || $classeConta <= 6) {
             return null;
         }
 
