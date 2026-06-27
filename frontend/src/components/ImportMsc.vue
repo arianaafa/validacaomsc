@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import MscValidationErrors from '@/components/MscValidationErrors.vue'
 import { uploadMscSpreadsheet } from '@/services/mscApi'
 import { ApiError } from '@/services/httpClient'
@@ -13,6 +14,7 @@ import type {
 import { normalizeValidationErrors } from '@/types/msc'
 
 const auth = useAuthStore()
+const route = useRoute()
 
 const periodo = ref('')
 const tipoMsc = ref<MscTipoValue>('agregada')
@@ -28,6 +30,23 @@ const tipoMscOptions: MscTipoOption[] = [
   { value: 'agregada', label: 'Agregada' },
   { value: 'estendida', label: 'Estendida' },
 ]
+
+const isReuploadPrefill = computed((): boolean => {
+  return typeof route.query.periodo === 'string' && typeof route.query.tipo_msc === 'string'
+})
+
+onMounted((): void => {
+  const queryPeriodo = route.query.periodo
+  const queryTipo = route.query.tipo_msc
+
+  if (typeof queryPeriodo === 'string') {
+    periodo.value = queryPeriodo
+  }
+
+  if (queryTipo === 'agregada' || queryTipo === 'estendida') {
+    tipoMsc.value = queryTipo
+  }
+})
 
 const canSubmit = computed(
   () =>
@@ -267,7 +286,7 @@ async function handleSubmit(): Promise<void> {
       <button
         type="submit"
         :disabled="!canSubmit"
-        class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3.5 text-base font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+        class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3.5 text-base font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-70"
       >
         <span
           v-if="isSubmitting"

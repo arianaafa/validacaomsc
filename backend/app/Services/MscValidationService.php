@@ -135,8 +135,8 @@ final class MscValidationService
         $upload->load('validationErrors');
 
         return [
-            'upload' => $this->formatUpload($upload),
-            'errors' => $this->formatValidationErrors($upload),
+            'upload' => MscUploadFormatter::format($upload),
+            'errors' => MscUploadFormatter::formatValidationErrors($upload),
         ];
     }
 
@@ -295,6 +295,7 @@ final class MscValidationService
         /** @var list<array<string, int|string|null>> $errorsToInsert */
         $errorsToInsert = [];
         $hasValidationErrors = false;
+        $totalLines = 0;
         $lineNumber = 2;
 
         try {
@@ -303,6 +304,7 @@ final class MscValidationService
 
                 if ($row === false) {
                     if (! feof($handle)) {
+                        $this->flushErrorsToInsert($errorsToInsert);
                         $this->recordProcessingFailure(
                             $upload,
                             sprintf(
@@ -310,6 +312,7 @@ final class MscValidationService
                                 $lineNumber + 1,
                             ),
                             $lineNumber + 1,
+                            $totalLines,
                         );
                     }
 
@@ -321,6 +324,8 @@ final class MscValidationService
                 if ($this->isEmptyDataRow($row)) {
                     continue;
                 }
+
+                $totalLines++;
 
                 $lineData = $this->parseLineData($lineNumber, $row);
                 $lineErrors = $this->lineValidator->validateLine($lineData);
@@ -360,11 +365,14 @@ final class MscValidationService
             }
 
             if ($hasValidationErrors) {
-                $this->markUploadAsValidationError($upload);
+                $this->flushErrorsToInsert($errorsToInsert);
+                $this->markUploadAsValidationError($upload, $totalLines);
 
                 return;
             }
 
+            $this->flushErrorsToInsert($errorsToInsert);
+            $this->finalizeUploadTotals($upload, $totalLines);
             $upload->update(['status' => MscUploadStatus::Sucesso]);
         } catch (Throwable $exception) {
             Log::error('Falha ao validar linhas da MSC.', [
@@ -374,14 +382,30 @@ final class MscValidationService
                 'exception' => $exception,
             ]);
 
+            $this->flushErrorsToInsert($errorsToInsert);
             $this->recordProcessingFailure(
                 $upload,
                 $this->resolveProcessingFailureMessage($exception),
                 $lineNumber > 2 ? $lineNumber : null,
+                $totalLines,
             );
         } finally {
             $this->flushErrorsToInsert($errorsToInsert);
         }
+    }
+
+    private function finalizeUploadTotals(MscUpload $upload, int $totalLines): void
+    {
+        $counts = $upload->validationErrors()
+            ->selectRaw('tipo, count(*) as aggregate')
+            ->groupBy('tipo')
+            ->pluck('aggregate', 'tipo');
+
+        $upload->update([
+            'total_lines' => $totalLines,
+            'total_errors' => (int) ($counts[MscValidationErrorTipo::Erro->value] ?? 0),
+            'total_alerts' => (int) ($counts[MscValidationErrorTipo::Alerta->value] ?? 0),
+        ]);
     }
 
     private function detectCsvDelimiter(string $path): string
@@ -430,6 +454,7 @@ final class MscValidationService
         MscUpload $upload,
         string $descricao,
         ?int $linha = null,
+        int $totalLines = 0,
     ): void {
         $this->recordValidationError(
             $upload,
@@ -437,6 +462,7 @@ final class MscValidationService
             self::CODIGO_REGRA_FALHA_PROCESSAMENTO,
             $descricao,
         );
+        $this->finalizeUploadTotals($upload, $totalLines);
         $upload->update(['status' => MscUploadStatus::Falha]);
     }
 
@@ -726,8 +752,9 @@ final class MscValidationService
         ]);
     }
 
-    private function markUploadAsValidationError(MscUpload $upload): void
+    private function markUploadAsValidationError(MscUpload $upload, int $totalLines = 0): void
     {
+        $this->finalizeUploadTotals($upload, $totalLines);
         $upload->update(['status' => MscUploadStatus::ErroValidacao]);
     }
 
@@ -765,52 +792,5 @@ final class MscValidationService
         }
 
         return $value;
-    }
-
-    /**
-     * @return list<array{
-     *     linha: int|null,
-     *     conta_contabil: string|null,
-     *     codigo_regra: string,
-     *     descricao: string,
-     *     tipo: string
-     * }>
-     */
-    private function formatValidationErrors(MscUpload $upload): array
-    {
-        return $upload->validationErrors
-            ->map(static fn (MscValidationError $error): array => [
-                'linha' => $error->linha,
-                'conta_contabil' => $error->conta_contabil,
-                'codigo_regra' => $error->codigo_regra,
-                'descricao' => $error->descricao,
-                'tipo' => $error->tipo->value,
-            ])
-            ->values()
-            ->all();
-    }
-
-    /**
-     * @return array{
-     *     id: string,
-     *     filename: string,
-     *     hash: string,
-     *     status: string,
-     *     periodo: string,
-     *     tipo_msc: string,
-     *     created_at: string|null
-     * }
-     */
-    private function formatUpload(MscUpload $upload): array
-    {
-        return [
-            'id' => $upload->id,
-            'filename' => $upload->filename,
-            'hash' => $upload->hash,
-            'status' => $upload->status->value,
-            'periodo' => $upload->periodo,
-            'tipo_msc' => $upload->tipo_msc->value,
-            'created_at' => $upload->created_at?->toIso8601String(),
-        ];
     }
 }

@@ -25,6 +25,9 @@ final class MscUpload extends Model
         'status',
         'periodo',
         'tipo_msc',
+        'total_lines',
+        'total_errors',
+        'total_alerts',
     ];
 
     /**
@@ -35,6 +38,9 @@ final class MscUpload extends Model
         return [
             'status' => MscUploadStatus::class,
             'tipo_msc' => MscTipo::class,
+            'total_lines' => 'integer',
+            'total_errors' => 'integer',
+            'total_alerts' => 'integer',
         ];
     }
 

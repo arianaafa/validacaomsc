@@ -26,5 +26,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/logout', LogoutController::class);
     Route::post('/refresh', RefreshTokenController::class);
 
+    Route::get('/msc/uploads', [MscUploadController::class, 'index']);
+    Route::get('/msc/uploads/{upload}', [MscUploadController::class, 'show']);
     Route::post('/msc/uploads', [MscUploadController::class, 'store']);
 });

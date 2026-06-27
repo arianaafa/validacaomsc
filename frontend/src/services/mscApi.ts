@@ -1,5 +1,26 @@
 import { apiRequest } from '@/services/httpClient'
-import type { MscUploadPayload, MscUploadResponse } from '@/types/msc'
+import type {
+  MscDashboardResponse,
+  MscUploadPayload,
+  MscUploadResponse,
+} from '@/types/msc'
+
+export async function fetchMscDashboard(token: string): Promise<MscDashboardResponse> {
+  return apiRequest<MscDashboardResponse>('/msc/uploads', {
+    method: 'GET',
+    token,
+  })
+}
+
+export async function fetchMscUpload(
+  uploadId: string,
+  token: string,
+): Promise<MscUploadResponse> {
+  return apiRequest<MscUploadResponse>(`/msc/uploads/${uploadId}`, {
+    method: 'GET',
+    token,
+  })
+}
 
 export async function uploadMscSpreadsheet(
   payload: MscUploadPayload,

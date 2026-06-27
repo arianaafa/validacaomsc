@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -7,15 +6,34 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      component: () => import('../layouts/MainLayout.vue'),
       meta: { requiresAuth: true },
-    },
-    {
-      path: '/msc/import',
-      name: 'msc-import',
-      component: () => import('../views/MscImportView.vue'),
-      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          name: 'home',
+          component: () => import('../views/Dashboard.vue'),
+          meta: { title: 'Dashboard' },
+        },
+        {
+          path: 'msc/uploads/:id',
+          name: 'msc-upload-detail',
+          component: () => import('../views/MscUploadDetailView.vue'),
+          meta: { title: 'Detalhes da Competência' },
+        },
+        {
+          path: 'msc/import',
+          name: 'msc-import',
+          component: () => import('../views/MscImportView.vue'),
+          meta: { title: 'Importar MSC' },
+        },
+        {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('../views/SettingsView.vue'),
+          meta: { title: 'Configurações' },
+        },
+      ],
     },
     {
       path: '/login',
@@ -39,7 +57,7 @@ router.beforeEach(async (to) => {
     await auth.bootstrap()
   }
 
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+  if (to.matched.some((record) => record.meta.requiresAuth) && !auth.isAuthenticated) {
     return {
       name: 'login',
       query: { redirect: to.fullPath },
