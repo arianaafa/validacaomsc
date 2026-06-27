@@ -88,6 +88,32 @@ MscUpload:
       type: string
       enum: [agregada, estendida]
       example: agregada
+    ibge_code:
+      type: string
+      nullable: true
+      pattern: '^\d{7}$'
+      example: '2507507'
+    ente:
+      type: object
+      properties:
+        municipio:
+          type: string
+          example: João Pessoa
+        uf:
+          type: string
+          example: PB
+        estado:
+          type: string
+          example: Paraíba
+    total_lines:
+      type: integer
+      example: 1200
+    total_errors:
+      type: integer
+      example: 3
+    total_alerts:
+      type: integer
+      example: 5
     created_at:
       type: string
       format: date-time

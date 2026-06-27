@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\MscTipo;
 use App\Enums\MscUploadStatus;
+use App\Helpers\IbgeHelper;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,7 @@ final class MscUpload extends Model
         'status',
         'periodo',
         'tipo_msc',
+        'ibge_code',
         'total_lines',
         'total_errors',
         'total_alerts',
@@ -55,5 +57,21 @@ final class MscUpload extends Model
     public function validationErrors(): HasMany
     {
         return $this->hasMany(MscValidationError::class);
+    }
+
+    /**
+     * @return array{municipio: string, uf: string, estado: string}
+     */
+    public function getEnteAttribute(): array
+    {
+        if ($this->ibge_code === null || $this->ibge_code === '') {
+            return [
+                'municipio' => '',
+                'uf' => '',
+                'estado' => '',
+            ];
+        }
+
+        return IbgeHelper::getMunicipioByCode($this->ibge_code);
     }
 }

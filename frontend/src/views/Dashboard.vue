@@ -10,6 +10,9 @@ import type {
 } from '@/types/msc'
 import {
   MSC_TIPO_LABELS,
+  buildDashboardSummary,
+  buildDashboardTrend,
+  buildMunicipioOptionsFromUploads,
   canReuploadUpload,
   formatPeriodo,
   formatPeriodoCurto,
@@ -20,15 +23,28 @@ const auth = useAuthStore()
 
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
-const summary = ref({
-  total_competencias: 0,
-  media_inconsistencias_mes: 0,
-  taxa_conformidade: 100,
-})
-const trend = ref<MscDashboardTrendPoint[]>([])
 const uploads = ref<MscUploadRecord[]>([])
+const selectedIbgeCode = ref('')
+
+const municipioOptions = computed(() => buildMunicipioOptionsFromUploads(uploads.value))
+
+const filteredUploads = computed((): MscUploadRecord[] => {
+  if (selectedIbgeCode.value === '') {
+    return uploads.value
+  }
+
+  return uploads.value.filter((upload) => upload.ibge_code === selectedIbgeCode.value)
+})
+
+const summary = computed(() => buildDashboardSummary(filteredUploads.value))
+
+const trend = computed((): MscDashboardTrendPoint[] =>
+  buildDashboardTrend(filteredUploads.value),
+)
 
 const hasUploads = computed((): boolean => uploads.value.length > 0)
+
+const hasFilteredUploads = computed((): boolean => filteredUploads.value.length > 0)
 
 const chartMaxValue = computed((): number => {
   const max = trend.value.reduce(
@@ -63,6 +79,24 @@ function barHeight(value: number): string {
   return `${Math.max(4, (value / chartMaxValue.value) * 100)}%`
 }
 
+function syncSelectedIbgeCode(): void {
+  const options = municipioOptions.value
+
+  if (options.length === 0) {
+    selectedIbgeCode.value = ''
+
+    return
+  }
+
+  const stillValid = options.some(
+    (option) => option.ibge_code === selectedIbgeCode.value,
+  )
+
+  if (!stillValid) {
+    selectedIbgeCode.value = options[0]?.ibge_code ?? ''
+  }
+}
+
 async function loadDashboard(): Promise<void> {
   const token = auth.accessToken
 
@@ -77,9 +111,8 @@ async function loadDashboard(): Promise<void> {
 
   try {
     const payload = await fetchMscDashboard(token)
-    summary.value = payload.summary
-    trend.value = payload.trend
     uploads.value = payload.uploads
+    syncSelectedIbgeCode()
   } catch {
     errorMessage.value = 'Não foi possível carregar o dashboard. Tente novamente em instantes.'
   } finally {
@@ -94,14 +127,41 @@ onMounted((): void => {
 
 <template>
   <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
-    <header class="flex flex-col gap-1">
-      <p class="text-sm font-medium text-indigo-600">Audita MSC</p>
-      <h2 class="text-2xl font-bold tracking-tight text-slate-900">
-        Painel de Competências
-      </h2>
-      <p class="text-sm text-slate-500">
-        Visão consolidada das validações contábeis enviadas ao validaMSC.
-      </p>
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div class="flex flex-col gap-1">
+        <p class="text-sm font-medium text-indigo-600">Audita MSC</p>
+        <h2 class="text-2xl font-bold tracking-tight text-slate-900">
+          Painel de Competências
+        </h2>
+        <p class="text-sm text-slate-500">
+          Visão consolidada das validações contábeis enviadas ao validaMSC.
+        </p>
+      </div>
+
+      <div
+        v-if="municipioOptions.length > 0"
+        class="flex shrink-0 flex-col gap-1.5 sm:min-w-[220px] sm:items-end"
+      >
+        <label
+          for="municipio-select"
+          class="text-xs font-semibold uppercase tracking-wide text-slate-500"
+        >
+          Município
+        </label>
+        <select
+          id="municipio-select"
+          v-model="selectedIbgeCode"
+          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 sm:w-auto sm:min-w-[220px]"
+        >
+          <option
+            v-for="municipio in municipioOptions"
+            :key="municipio.ibge_code"
+            :value="municipio.ibge_code"
+          >
+            {{ municipio.label }}
+          </option>
+        </select>
+      </div>
     </header>
 
     <p
@@ -260,6 +320,29 @@ onMounted((): void => {
         </RouterLink>
       </div>
 
+      <div
+        v-else-if="municipioOptions.length > 0 && !hasFilteredUploads"
+        class="flex flex-col items-center justify-center gap-4 px-6 py-16 text-center"
+      >
+        <svg
+          class="h-20 w-20 text-slate-200"
+          viewBox="0 0 80 80"
+          fill="none"
+          aria-hidden="true"
+        >
+          <rect x="16" y="12" width="48" height="56" rx="6" stroke="currentColor" stroke-width="2" />
+          <path d="M28 28h24M28 38h18M28 48h22" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <div class="max-w-sm">
+          <h4 class="text-base font-semibold text-slate-800">
+            Nenhuma competência para este município
+          </h4>
+          <p class="mt-2 text-sm leading-relaxed text-slate-500">
+            Selecione outro município ou importe uma planilha MSC vinculada a este ente.
+          </p>
+        </div>
+      </div>
+
       <div v-else class="overflow-x-auto">
         <table class="min-w-full divide-y divide-slate-100 text-sm">
           <thead class="bg-slate-50/80">
@@ -274,7 +357,7 @@ onMounted((): void => {
           </thead>
           <tbody class="divide-y divide-slate-100 bg-white">
             <tr
-              v-for="upload in uploads"
+              v-for="upload in filteredUploads"
               :key="upload.id"
               class="transition-colors hover:bg-slate-50/60"
             >

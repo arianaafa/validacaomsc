@@ -10,6 +10,7 @@ import type {
   MscTipoValue,
   MscUploadPayload,
   MscValidationError,
+  MunicipioEnte,
 } from '@/types/msc'
 import { normalizeValidationErrors } from '@/types/msc'
 
@@ -25,6 +26,8 @@ const alertMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
 const validationErrors = ref<MscValidationError[]>([])
 const lastAnalyzedFilename = ref('')
+const uploadIbgeCode = ref<string | null>(null)
+const uploadEnte = ref<MunicipioEnte | undefined>(undefined)
 
 const tipoMscOptions: MscTipoOption[] = [
   { value: 'agregada', label: 'Agregada' },
@@ -118,6 +121,8 @@ function clearFeedback(): void {
   successMessage.value = null
   validationErrors.value = []
   lastAnalyzedFilename.value = ''
+  uploadIbgeCode.value = null
+  uploadEnte.value = undefined
 }
 
 function buildPayload(): MscUploadPayload | null {
@@ -161,6 +166,8 @@ async function handleSubmit(): Promise<void> {
     if (response.errors.length > 0) {
       validationErrors.value = normalizeValidationErrors(response.errors)
       lastAnalyzedFilename.value = response.upload.filename
+      uploadIbgeCode.value = response.upload.ibge_code
+      uploadEnte.value = response.upload.ente
 
       if (response.upload.status === 'falha') {
         alertMessage.value =
@@ -306,6 +313,8 @@ async function handleSubmit(): Promise<void> {
       :errors="validationErrors"
       :analyzed-filename="lastAnalyzedFilename"
       :periodo="periodo"
+      :ibge-code="uploadIbgeCode"
+      :ente="uploadEnte"
       class="mt-6"
     />
   </section>

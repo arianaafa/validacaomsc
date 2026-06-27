@@ -4,7 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import MscValidationErrors from '@/components/MscValidationErrors.vue'
 import { fetchMscUpload } from '@/services/mscApi'
 import { useAuthStore } from '@/stores/auth'
-import type { MscValidationError } from '@/types/msc'
+import type { MunicipioEnte, MscValidationError } from '@/types/msc'
 import {
   MSC_TIPO_LABELS,
   formatPeriodo,
@@ -22,6 +22,8 @@ const periodo = ref('')
 const tipoMsc = ref('')
 const totalErrors = ref(0)
 const totalAlerts = ref(0)
+const ibgeCode = ref<string | null>(null)
+const ente = ref<MunicipioEnte | undefined>(undefined)
 const validationErrors = ref<MscValidationError[]>([])
 
 const uploadId = computed((): string => String(route.params.id ?? ''))
@@ -59,6 +61,8 @@ async function loadUploadDetail(): Promise<void> {
     tipoMsc.value = payload.upload.tipo_msc
     totalErrors.value = payload.upload.total_errors
     totalAlerts.value = payload.upload.total_alerts
+    ibgeCode.value = payload.upload.ibge_code
+    ente.value = payload.upload.ente
     validationErrors.value = normalizeValidationErrors(payload.errors)
   } catch {
     errorMessage.value = 'Não foi possível carregar os detalhes desta competência.'
@@ -135,6 +139,8 @@ onMounted((): void => {
         :errors="validationErrors"
         :analyzed-filename="filename"
         :periodo="periodo"
+        :ibge-code="ibgeCode"
+        :ente="ente"
       />
 
       <section

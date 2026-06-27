@@ -112,7 +112,9 @@ final class MscValidationService
             ]);
         }
 
-        $upload = DB::transaction(function () use ($user, $file, $periodo, $tipoMsc, $hash): MscUpload {
+        $ibgeCode = $this->extractIbgeCodeFromCsvPath($path);
+
+        $upload = DB::transaction(function () use ($user, $file, $periodo, $tipoMsc, $hash, $ibgeCode): MscUpload {
             $existingUpload = $this->findExistingUpload($user, $periodo, $tipoMsc);
 
             if ($existingUpload !== null) {
@@ -126,6 +128,7 @@ final class MscValidationService
                 'status' => MscUploadStatus::Processando,
                 'periodo' => $periodo,
                 'tipo_msc' => $tipoMsc,
+                'ibge_code' => $ibgeCode,
             ]);
         });
 
@@ -219,6 +222,20 @@ final class MscValidationService
                 return;
             }
 
+            $idEnte = $this->persistIbgeCode($upload, $firstRow);
+
+            if ($idEnte === null) {
+                $this->recordValidationError(
+                    $upload,
+                    1,
+                    self::CODIGO_REGRA_ESTRUTURA_SICONFI,
+                    'Não foi possível extrair o código IBGE do ente na primeira linha do arquivo.',
+                );
+                $this->markUploadAsValidationError($upload);
+
+                return;
+            }
+
             $headerRow = fgetcsv($handle, 0, $this->activeCsvDelimiter);
 
             if ($headerRow === false) {
@@ -237,20 +254,6 @@ final class MscValidationService
             }
 
             if (! $this->validateHeaderRow($upload, $headerRow, 2)) {
-                $this->markUploadAsValidationError($upload);
-
-                return;
-            }
-
-            $idEnte = $this->extractIdEnteFromCodigo($this->extractSiconfiCode($firstRow) ?? '');
-
-            if ($idEnte === null) {
-                $this->recordValidationError(
-                    $upload,
-                    1,
-                    self::CODIGO_REGRA_ESTRUTURA_SICONFI,
-                    'Não foi possível extrair o código IBGE do ente na primeira linha do arquivo.',
-                );
                 $this->markUploadAsValidationError($upload);
 
                 return;
@@ -756,6 +759,47 @@ final class MscValidationService
     {
         $this->finalizeUploadTotals($upload, $totalLines);
         $upload->update(['status' => MscUploadStatus::ErroValidacao]);
+    }
+
+    private function extractIbgeCodeFromCsvPath(string $path): ?string
+    {
+        $delimiter = $this->detectCsvDelimiter($path);
+
+        $handle = fopen($path, 'rb');
+
+        if ($handle === false) {
+            return null;
+        }
+
+        try {
+            $firstRow = fgetcsv($handle, 0, $delimiter);
+
+            if ($firstRow === false) {
+                return null;
+            }
+
+            return $this->extractIdEnteFromCodigo($this->extractSiconfiCode($firstRow) ?? '');
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /**
+     * @param list<string|null> $firstRow
+     */
+    private function persistIbgeCode(MscUpload $upload, array $firstRow): ?string
+    {
+        $idEnte = $this->extractIdEnteFromCodigo($this->extractSiconfiCode($firstRow) ?? '');
+
+        if ($idEnte === null) {
+            return null;
+        }
+
+        if ($upload->ibge_code !== $idEnte) {
+            $upload->update(['ibge_code' => $idEnte]);
+        }
+
+        return $idEnte;
     }
 
     private function extractIdEnteFromCodigo(string $codigoSiconfi): ?string

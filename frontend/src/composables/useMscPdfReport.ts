@@ -1,7 +1,12 @@
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { CellHookData } from 'jspdf-autotable'
-import type { MscValidationError, MscValidationErrorTipo } from '@/types/msc'
+import {
+  formatEnteLabel,
+  getMunicipioByCode,
+  hasEnteData,
+} from '@/services/ibgeApi'
+import type { MunicipioEnte, MscValidationError, MscValidationErrorTipo } from '@/types/msc'
 
 const BRAND_COLOR: [number, number, number] = [30, 58, 95]
 const ZEBRA_COLOR: [number, number, number] = [248, 250, 252]
@@ -17,6 +22,8 @@ const DESCRIPTION_COLUMN_INDEX = 4
 
 export interface MscPdfReportOptions {
   periodo: string
+  ibgeCode?: string | null
+  ente?: MunicipioEnte
   outputFilename?: string
 }
 
@@ -91,6 +98,7 @@ function drawExecutiveHeader(
   analyzedFilename: string,
   periodo: string,
   generatedAt: Date,
+  ente: MunicipioEnte,
 ): number {
   const pageWidth = doc.internal.pageSize.getWidth()
   let cursorY = 16
@@ -112,12 +120,33 @@ function drawExecutiveHeader(
   cursorY += 6
   doc.text(`Período de referência: ${periodo}`, PAGE_MARGIN_X, cursorY)
 
+  const enteLabel = formatEnteLabel(ente)
+
+  if (enteLabel !== null) {
+    cursorY += 6
+    doc.text(`Município: ${enteLabel}`, PAGE_MARGIN_X, cursorY)
+  }
+
   cursorY += 4
   doc.setDrawColor(...BRAND_COLOR)
   doc.setLineWidth(0.6)
   doc.line(PAGE_MARGIN_X, cursorY, pageWidth - PAGE_MARGIN_X, cursorY)
 
   return cursorY + 8
+}
+
+async function resolveEnte(options?: MscPdfReportOptions): Promise<MunicipioEnte> {
+  if (options?.ente !== undefined && hasEnteData(options.ente)) {
+    return options.ente
+  }
+
+  const ibgeCode = options?.ibgeCode?.trim() ?? ''
+
+  if (ibgeCode === '') {
+    return { municipio: '', uf: '', estado: '' }
+  }
+
+  return getMunicipioByCode(ibgeCode)
 }
 
 function drawSummaryCards(
@@ -208,19 +237,20 @@ export function useMscPdfReport(): {
     filename: string,
     errors: MscValidationError[],
     options?: MscPdfReportOptions,
-  ) => void
+  ) => Promise<void>
 } {
-  function exportToPdf(
+  async function exportToPdf(
     filename: string,
     errors: MscValidationError[],
     options?: MscPdfReportOptions,
-  ): void {
+  ): Promise<void> {
     const analyzedFilename = filename.trim() === '' ? '—' : filename.trim()
     const periodo = options?.periodo?.trim() === '' || options?.periodo === undefined
       ? '—'
       : options.periodo.trim()
     const generatedAt = new Date()
     const summary = buildSummaryCounts(errors)
+    const ente = await resolveEnte(options)
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
@@ -228,7 +258,7 @@ export function useMscPdfReport(): {
 
     const tableStartY = drawSummaryCards(
       doc,
-      drawExecutiveHeader(doc, analyzedFilename, periodo, generatedAt),
+      drawExecutiveHeader(doc, analyzedFilename, periodo, generatedAt, ente),
       summary,
     )
 
