@@ -16,6 +16,7 @@ async function handleLogout(): Promise<void> {
 
       <nav>
         <template v-if="auth.isAuthenticated">
+          <RouterLink to="/msc/import">Importar MSC</RouterLink>
           <span class="user-label">{{ auth.user?.name }}</span>
           <button type="button" class="link-button" @click="handleLogout">
             Sair

@@ -6,6 +6,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 final class LogoutTest extends TestCase
@@ -39,5 +40,18 @@ final class LogoutTest extends TestCase
         $response = $this->postJson('/api/logout');
 
         $response->assertUnauthorized();
+    }
+
+    public function test_logout_with_transient_sanctum_token_does_not_error(): void
+    {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/logout');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('message', 'Logout realizado com sucesso.');
     }
 }

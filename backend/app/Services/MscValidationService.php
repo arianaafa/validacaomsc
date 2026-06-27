@@ -10,18 +10,37 @@ use App\Enums\MscValidationErrorTipo;
 use App\Models\MscUpload;
 use App\Models\MscValidationError;
 use App\Models\User;
+use App\Services\Msc\Contracts\MscLineData;
+use App\Services\Msc\MscLineValidator;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 final class MscValidationService
 {
     private const SICONFI_CODE_PATTERN = '/^\d{7}EX$/';
+
+    private const CSV_DELIMITER = ';';
+
+    private const BATCH_INSERT_SIZE = 500;
 
     private const CODIGO_REGRA_ESTRUTURA_SICONFI = 'ESTRUTURA_SICONFI';
 
     private const CODIGO_REGRA_QUANTIDADE_COLUNAS = 'QUANTIDADE_COLUNAS';
 
     private const CODIGO_REGRA_CABECALHO_INVALIDO = 'CABECALHO_INVALIDO';
+
+    private const CODIGO_REGRA_FALHA_PROCESSAMENTO = 'FALHA_PROCESSAMENTO';
+
+    private const COLUMN_CONTA = 0;
+
+    private const COLUMN_VALOR = 13;
+
+    private const COLUMN_TIPO_VALOR = 14;
+
+    private const COLUMN_NATUREZA_VALOR = 15;
 
     /**
      * @var list<string>
@@ -45,6 +64,12 @@ final class MscValidationService
         'Natureza_valor',
     ];
 
+    public function __construct(
+        private readonly MscLineValidator $lineValidator,
+    ) {}
+
+    private string $activeCsvDelimiter = self::CSV_DELIMITER;
+
     /**
      * @return array{
      *     upload: array{
@@ -55,7 +80,13 @@ final class MscValidationService
      *         periodo: string,
      *         tipo_msc: string,
      *         created_at: string|null
-     *     }
+     *     },
+     *     errors: list<array{
+     *         linha: int|null,
+     *         codigo_regra: string,
+     *         descricao: string,
+     *         tipo: string
+     *     }>
      * }
      */
     public function processUpload(
@@ -98,24 +129,31 @@ final class MscValidationService
         $this->processCsvStream($upload, $path);
 
         $upload->refresh();
+        $upload->load('validationErrors');
 
         return [
             'upload' => $this->formatUpload($upload),
+            'errors' => $this->formatValidationErrors($upload),
         ];
     }
 
     private function processCsvStream(MscUpload $upload, string $path): void
     {
+        $this->activeCsvDelimiter = $this->detectCsvDelimiter($path);
+
         $handle = fopen($path, 'rb');
 
         if ($handle === false) {
-            $upload->update(['status' => MscUploadStatus::Falha]);
+            $this->recordProcessingFailure(
+                $upload,
+                'Não foi possível abrir o arquivo CSV para leitura.',
+            );
 
             return;
         }
 
         try {
-            $firstRow = fgetcsv($handle);
+            $firstRow = fgetcsv($handle, 0, $this->activeCsvDelimiter);
 
             if ($firstRow === false) {
                 $this->recordValidationError(
@@ -135,7 +173,7 @@ final class MscValidationService
                 return;
             }
 
-            $headerRow = fgetcsv($handle);
+            $headerRow = fgetcsv($handle, 0, $this->activeCsvDelimiter);
 
             if ($headerRow === false) {
                 $this->recordValidationError(
@@ -158,20 +196,270 @@ final class MscValidationService
                 return;
             }
 
-            while (fgetcsv($handle) !== false) {
-                // Reservado para validações de conteúdo das linhas de dados.
+            $this->processDataRows($upload, $handle);
+        } catch (Throwable $exception) {
+            Log::error('Falha ao processar upload MSC.', [
+                'upload_id' => $upload->id,
+                'message' => $exception->getMessage(),
+                'exception' => $exception,
+            ]);
+
+            $this->recordProcessingFailure(
+                $upload,
+                $this->resolveProcessingFailureMessage($exception),
+            );
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /**
+     * @param resource $handle
+     */
+    private function processDataRows(MscUpload $upload, $handle): void
+    {
+        /** @var list<array<string, int|string|null>> $errorsToInsert */
+        $errorsToInsert = [];
+        $hasValidationErrors = false;
+        $lineNumber = 2;
+
+        try {
+            while (true) {
+                $row = fgetcsv($handle, 0, $this->activeCsvDelimiter);
+
+                if ($row === false) {
+                    if (! feof($handle)) {
+                        $this->recordProcessingFailure(
+                            $upload,
+                            sprintf(
+                                'Erro ao ler a linha %d do arquivo CSV. Verifique delimitador, codificação (UTF-8) e formatação das aspas.',
+                                $lineNumber + 1,
+                            ),
+                            $lineNumber + 1,
+                        );
+                    }
+
+                    break;
+                }
+
+                $lineNumber++;
+
+                if ($this->isEmptyDataRow($row)) {
+                    continue;
+                }
+
+                $lineData = $this->parseLineData($lineNumber, $row);
+                $lineErrors = $this->lineValidator->validateLine($lineData);
+
+                if ($lineErrors === []) {
+                    continue;
+                }
+
+                $hasValidationErrors = true;
+
+                foreach ($lineErrors as $lineError) {
+                    $errorsToInsert[] = $this->buildErrorRecord(
+                        $upload,
+                        $lineData->linha,
+                        $lineData->conta,
+                        $lineError['codigo_regra'],
+                        $lineError['descricao'],
+                    );
+
+                    if (count($errorsToInsert) >= self::BATCH_INSERT_SIZE) {
+                        $this->flushErrorsToInsert($errorsToInsert);
+                    }
+                }
             }
 
-            if (feof($handle) === false) {
-                $upload->update(['status' => MscUploadStatus::Falha]);
+            if ($upload->status === MscUploadStatus::Falha) {
+                return;
+            }
+
+            if ($hasValidationErrors) {
+                $this->markUploadAsValidationError($upload);
 
                 return;
             }
 
             $upload->update(['status' => MscUploadStatus::Sucesso]);
+        } catch (Throwable $exception) {
+            Log::error('Falha ao validar linhas da MSC.', [
+                'upload_id' => $upload->id,
+                'line' => $lineNumber,
+                'message' => $exception->getMessage(),
+                'exception' => $exception,
+            ]);
+
+            $this->recordProcessingFailure(
+                $upload,
+                $this->resolveProcessingFailureMessage($exception),
+                $lineNumber > 2 ? $lineNumber : null,
+            );
+        } finally {
+            $this->flushErrorsToInsert($errorsToInsert);
+        }
+    }
+
+    private function detectCsvDelimiter(string $path): string
+    {
+        $handle = fopen($path, 'rb');
+
+        if ($handle === false) {
+            return self::CSV_DELIMITER;
+        }
+
+        try {
+            fgets($handle);
+            $headerLine = fgets($handle);
+
+            if ($headerLine === false) {
+                return self::CSV_DELIMITER;
+            }
+
+            $expectedColumnCount = count(self::EXPECTED_HEADERS);
+            $semicolonColumns = count(str_getcsv($headerLine, ';'));
+            $commaColumns = count(str_getcsv($headerLine, ','));
+
+            if ($semicolonColumns === $expectedColumnCount) {
+                return ';';
+            }
+
+            if ($commaColumns === $expectedColumnCount) {
+                return ',';
+            }
+
+            return $commaColumns > $semicolonColumns ? ',' : ';';
         } finally {
             fclose($handle);
         }
+    }
+
+    private function resolveProcessingFailureMessage(Throwable $exception): string
+    {
+        return sprintf(
+            'Falha ao processar o arquivo: %s',
+            $exception->getMessage(),
+        );
+    }
+
+    private function recordProcessingFailure(
+        MscUpload $upload,
+        string $descricao,
+        ?int $linha = null,
+    ): void {
+        $this->recordValidationError(
+            $upload,
+            $linha,
+            self::CODIGO_REGRA_FALHA_PROCESSAMENTO,
+            $descricao,
+        );
+        $upload->update(['status' => MscUploadStatus::Falha]);
+    }
+
+    /**
+     * @param list<string|null> $row
+     */
+    private function isEmptyDataRow(array $row): bool
+    {
+        foreach ($row as $cell) {
+            if ($cell !== null && trim($cell) !== '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param list<string|null> $row
+     */
+    private function parseLineData(int $lineNumber, array $row): MscLineData
+    {
+        $columns = $this->normalizeCsvRow($row);
+
+        return new MscLineData(
+            linha: $lineNumber,
+            conta: $columns[self::COLUMN_CONTA] ?? '',
+            ics: $this->buildIcsFromRow($columns),
+            valor: $this->parseValor($columns[self::COLUMN_VALOR] ?? ''),
+            tipoValor: $columns[self::COLUMN_TIPO_VALOR] ?? '',
+            naturezaValor: $columns[self::COLUMN_NATUREZA_VALOR] ?? '',
+        );
+    }
+
+    /**
+     * @param list<string> $columns
+     *
+     * @return array<string, string>
+     */
+    private function buildIcsFromRow(array $columns): array
+    {
+        $ics = [];
+
+        for ($indice = 1; $indice <= 6; $indice++) {
+            $icColumn = ($indice * 2) - 1;
+            $tipoColumn = $indice * 2;
+
+            $ics["IC{$indice}"] = $columns[$icColumn] ?? '';
+            $ics["TIPO{$indice}"] = $columns[$tipoColumn] ?? '';
+        }
+
+        return $ics;
+    }
+
+    private function parseValor(string $rawValue): float
+    {
+        $value = trim($rawValue);
+
+        if ($value === '') {
+            return 0.0;
+        }
+
+        if (str_contains($value, ',')) {
+            $value = str_replace('.', '', $value);
+            $value = str_replace(',', '.', $value);
+        }
+
+        return (float) $value;
+    }
+
+    /**
+     * @return array<string, int|string|null>
+     */
+    private function buildErrorRecord(
+        MscUpload $upload,
+        int $linha,
+        string $contaContabil,
+        string $codigoRegra,
+        string $descricao,
+    ): array {
+        $now = now();
+
+        return [
+            'id' => (string) Str::uuid(),
+            'msc_upload_id' => $upload->id,
+            'linha' => $linha,
+            'conta_contabil' => $contaContabil !== '' ? $contaContabil : null,
+            'tipo' => MscValidationErrorTipo::Erro->value,
+            'codigo_regra' => $codigoRegra,
+            'descricao' => $descricao,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ];
+    }
+
+    /**
+     * @param list<array<string, int|string|null>> $errorsToInsert
+     */
+    private function flushErrorsToInsert(array &$errorsToInsert): void
+    {
+        if ($errorsToInsert === []) {
+            return;
+        }
+
+        MscValidationError::query()->insert($errorsToInsert);
+        $errorsToInsert = [];
     }
 
     /**
@@ -340,7 +628,7 @@ final class MscValidationService
 
     private function recordValidationError(
         MscUpload $upload,
-        int $linha,
+        ?int $linha,
         string $codigoRegra,
         string $descricao,
     ): void {
@@ -366,6 +654,29 @@ final class MscValidationService
         }
 
         return $value;
+    }
+
+    /**
+     * @return list<array{
+     *     linha: int|null,
+     *     conta_contabil: string|null,
+     *     codigo_regra: string,
+     *     descricao: string,
+     *     tipo: string
+     * }>
+     */
+    private function formatValidationErrors(MscUpload $upload): array
+    {
+        return $upload->validationErrors
+            ->map(static fn (MscValidationError $error): array => [
+                'linha' => $error->linha,
+                'conta_contabil' => $error->conta_contabil,
+                'codigo_regra' => $error->codigo_regra,
+                'descricao' => $error->descricao,
+                'tipo' => $error->tipo->value,
+            ])
+            ->values()
+            ->all();
     }
 
     /**

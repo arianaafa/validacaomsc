@@ -9,6 +9,7 @@ use Illuminate\Auth\AuthManager;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\TransientToken;
 
 final class AuthService
 {
@@ -51,13 +52,15 @@ final class AuthService
         return $this->issueTokenResponse($user);
     }
 
-    public function logout(User $user, string $plainTextToken): void
+    public function logout(User $user, ?string $plainTextToken = null): void
     {
-        $token = PersonalAccessToken::findToken($plainTextToken);
+        if ($plainTextToken !== null) {
+            $this->revokePersonalAccessToken($user, $plainTextToken);
 
-        if ($token !== null && (int) $token->tokenable_id === (int) $user->id) {
-            $token->delete();
+            return;
         }
+
+        $this->revokeCurrentAccessToken($user);
     }
 
     /**
@@ -65,11 +68,7 @@ final class AuthService
      */
     public function refreshToken(User $user, string $plainTextToken): array
     {
-        $token = PersonalAccessToken::findToken($plainTextToken);
-
-        if ($token !== null && (int) $token->tokenable_id === (int) $user->id) {
-            $token->delete();
-        }
+        $this->revokePersonalAccessToken($user, $plainTextToken);
 
         return $this->issueTokenResponse($user);
     }
@@ -84,6 +83,28 @@ final class AuthService
             'name' => $user->name,
             'email' => $user->email,
         ];
+    }
+
+    private function revokePersonalAccessToken(User $user, string $plainTextToken): void
+    {
+        $token = PersonalAccessToken::findToken($plainTextToken);
+
+        if ($token !== null && (int) $token->tokenable_id === (int) $user->id) {
+            $token->delete();
+        }
+    }
+
+    private function revokeCurrentAccessToken(User $user): void
+    {
+        $currentToken = $user->currentAccessToken();
+
+        if ($currentToken instanceof TransientToken) {
+            return;
+        }
+
+        if ($currentToken instanceof PersonalAccessToken) {
+            $currentToken->delete();
+        }
     }
 
     /**

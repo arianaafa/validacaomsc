@@ -21,11 +21,7 @@ final class LogoutController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $plainTextToken = $request->bearerToken();
-
-        if ($plainTextToken !== null) {
-            $this->authService->logout($user, $plainTextToken);
-        }
+        $this->authService->logout($user, $request->bearerToken());
 
         return response()->json([
             'message' => 'Logout realizado com sucesso.',

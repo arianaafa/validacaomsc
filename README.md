@@ -39,6 +39,7 @@ Serviços:
 | Frontend  | http://localhost:5173     |
 | Backend   | http://localhost:8000     |
 | API health| http://localhost:8000/api/health |
+| OpenAPI   | http://localhost:8000/docs/openapi/ |
 | PostgreSQL| localhost:5432            |
 
 ## Comandos úteis
