@@ -12,6 +12,7 @@ use App\Services\Msc\Rules\D1_00025Rule;
 use App\Services\Msc\Rules\D1_00027Rule;
 use App\Services\Msc\Rules\D1_00028Rule;
 use App\Services\Msc\Rules\D1_ContinuidadeSaldoRule;
+use App\Services\Msc\Rules\D1_ControleContinuidadeRule;
 use App\Services\Msc\Rules\D1_OrcamentariaContinuidadeRule;
 use App\Services\Msc\Rules\D1_PatrimonialContinuidadeRule;
 use Illuminate\Support\ServiceProvider;
@@ -25,11 +26,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(SiconfiClient::class);
 
-        $this->app->singleton(D1_ContinuidadeSaldoRule::class, static function ($app): D1_ContinuidadeSaldoRule {
-            return new D1_ContinuidadeSaldoRule(
-                $app->make(SiconfiClient::class),
-            );
-        });
+        $this->app->singleton(D1_ContinuidadeSaldoRule::class, static fn (): D1_ContinuidadeSaldoRule => new D1_ContinuidadeSaldoRule());
 
         $this->app->singleton(D1_PatrimonialContinuidadeRule::class, static function ($app): D1_PatrimonialContinuidadeRule {
             return new D1_PatrimonialContinuidadeRule(
@@ -43,6 +40,12 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(D1_ControleContinuidadeRule::class, static function ($app): D1_ControleContinuidadeRule {
+            return new D1_ControleContinuidadeRule(
+                $app->make(SiconfiClient::class),
+            );
+        });
+
         $this->app->singleton(MscLineValidator::class, static function ($app): MscLineValidator {
             return new MscLineValidator([
                 new D1_00017Rule(),
@@ -52,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
                 new D1_00028Rule(),
                 $app->make(D1_PatrimonialContinuidadeRule::class),
                 $app->make(D1_OrcamentariaContinuidadeRule::class),
+                $app->make(D1_ControleContinuidadeRule::class),
                 $app->make(D1_ContinuidadeSaldoRule::class),
             ]);
         });
