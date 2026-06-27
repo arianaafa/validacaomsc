@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\Msc\Contracts\MscLineData;
 use App\Services\Msc\MscLineValidator;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -111,20 +112,22 @@ final class MscValidationService
             ]);
         }
 
-        if (MscUpload::query()->where('hash', $hash)->exists()) {
-            throw ValidationException::withMessages([
-                'file' => ['Este arquivo já foi enviado anteriormente.'],
-            ]);
-        }
+        $upload = DB::transaction(function () use ($user, $file, $periodo, $tipoMsc, $hash): MscUpload {
+            $existingUpload = $this->findExistingUpload($user, $periodo, $tipoMsc);
 
-        $upload = MscUpload::query()->create([
-            'user_id' => $user->id,
-            'filename' => $file->getClientOriginalName(),
-            'hash' => $hash,
-            'status' => MscUploadStatus::Processando,
-            'periodo' => $periodo,
-            'tipo_msc' => $tipoMsc,
-        ]);
+            if ($existingUpload !== null) {
+                $this->handleExistingUpload($existingUpload);
+            }
+
+            return MscUpload::query()->create([
+                'user_id' => $user->id,
+                'filename' => $file->getClientOriginalName(),
+                'hash' => $hash,
+                'status' => MscUploadStatus::Processando,
+                'periodo' => $periodo,
+                'tipo_msc' => $tipoMsc,
+            ]);
+        });
 
         $this->processCsvStream($upload, $path);
 
@@ -135,6 +138,49 @@ final class MscValidationService
             'upload' => $this->formatUpload($upload),
             'errors' => $this->formatValidationErrors($upload),
         ];
+    }
+
+    private function findExistingUpload(User $user, string $periodo, MscTipo $tipoMsc): ?MscUpload
+    {
+        return MscUpload::query()
+            ->where('user_id', $user->id)
+            ->where('periodo', $periodo)
+            ->where('tipo_msc', $tipoMsc)
+            ->first();
+    }
+
+    private function handleExistingUpload(MscUpload $existingUpload): void
+    {
+        if (
+            $existingUpload->status === MscUploadStatus::Processando
+            || $existingUpload->status === MscUploadStatus::Sucesso
+        ) {
+            $mensagem = match ($existingUpload->status) {
+                MscUploadStatus::Processando => sprintf(
+                    'Já existe um envio em processamento para o período %s (%s). Aguarde a conclusão antes de enviar novamente.',
+                    $existingUpload->periodo,
+                    $existingUpload->tipo_msc->value,
+                ),
+                MscUploadStatus::Sucesso => sprintf(
+                    'O período %s (%s) já está consolidado com sucesso. Não é permitido um novo envio.',
+                    $existingUpload->periodo,
+                    $existingUpload->tipo_msc->value,
+                ),
+            };
+
+            throw ValidationException::withMessages([
+                'periodo' => [$mensagem],
+            ]);
+        }
+
+        if (
+            $existingUpload->status === MscUploadStatus::ErroValidacao
+            || $existingUpload->status === MscUploadStatus::Falha
+        ) {
+            $existingUpload->delete();
+
+            return;
+        }
     }
 
     private function processCsvStream(MscUpload $upload, string $path): void
@@ -196,7 +242,35 @@ final class MscValidationService
                 return;
             }
 
-            $this->processDataRows($upload, $handle);
+            $idEnte = $this->extractIdEnteFromCodigo($this->extractSiconfiCode($firstRow) ?? '');
+
+            if ($idEnte === null) {
+                $this->recordValidationError(
+                    $upload,
+                    1,
+                    self::CODIGO_REGRA_ESTRUTURA_SICONFI,
+                    'Não foi possível extrair o código IBGE do ente na primeira linha do arquivo.',
+                );
+                $this->markUploadAsValidationError($upload);
+
+                return;
+            }
+
+            [$anoReferencia, $mesReferencia] = $this->parsePeriodo($upload->periodo);
+            $tipoMatriz = $this->resolveTipoMatriz($upload->tipo_msc);
+
+            $this->lineValidator->prepareFileContext(
+                $idEnte,
+                $anoReferencia,
+                $mesReferencia,
+                $tipoMatriz,
+            );
+
+            try {
+                $this->processDataRows($upload, $handle);
+            } finally {
+                $this->lineValidator->resetFileContext();
+            }
         } catch (Throwable $exception) {
             Log::error('Falha ao processar upload MSC.', [
                 'upload_id' => $upload->id,
@@ -255,7 +329,7 @@ final class MscValidationService
                     continue;
                 }
 
-                $hasValidationErrors = true;
+                $hasLineErrors = false;
 
                 foreach ($lineErrors as $lineError) {
                     $errorsToInsert[] = $this->buildErrorRecord(
@@ -264,11 +338,20 @@ final class MscValidationService
                         $lineData->conta,
                         $lineError['codigo_regra'],
                         $lineError['descricao'],
+                        MscValidationErrorTipo::from($lineError['tipo']),
                     );
+
+                    if ($lineError['tipo'] === MscValidationErrorTipo::Erro->value) {
+                        $hasLineErrors = true;
+                    }
 
                     if (count($errorsToInsert) >= self::BATCH_INSERT_SIZE) {
                         $this->flushErrorsToInsert($errorsToInsert);
                     }
+                }
+
+                if ($hasLineErrors) {
+                    $hasValidationErrors = true;
                 }
             }
 
@@ -433,6 +516,7 @@ final class MscValidationService
         string $contaContabil,
         string $codigoRegra,
         string $descricao,
+        MscValidationErrorTipo $tipo = MscValidationErrorTipo::Erro,
     ): array {
         $now = now();
 
@@ -441,7 +525,7 @@ final class MscValidationService
             'msc_upload_id' => $upload->id,
             'linha' => $linha,
             'conta_contabil' => $contaContabil !== '' ? $contaContabil : null,
-            'tipo' => MscValidationErrorTipo::Erro->value,
+            'tipo' => $tipo->value,
             'codigo_regra' => $codigoRegra,
             'descricao' => $descricao,
             'created_at' => $now,
@@ -645,6 +729,33 @@ final class MscValidationService
     private function markUploadAsValidationError(MscUpload $upload): void
     {
         $upload->update(['status' => MscUploadStatus::ErroValidacao]);
+    }
+
+    private function extractIdEnteFromCodigo(string $codigoSiconfi): ?string
+    {
+        if (preg_match('/^(\d{7})EX$/', $codigoSiconfi, $matches) !== 1) {
+            return null;
+        }
+
+        return $matches[1];
+    }
+
+    /**
+     * @return array{0: int, 1: int}
+     */
+    private function parsePeriodo(string $periodo): array
+    {
+        [$ano, $mes] = explode('-', $periodo);
+
+        return [(int) $ano, (int) $mes];
+    }
+
+    private function resolveTipoMatriz(MscTipo $tipoMsc): string
+    {
+        return match ($tipoMsc) {
+            MscTipo::Agregada => 'MSCC',
+            MscTipo::Estendida => 'MSCE',
+        };
     }
 
     private function removeUtf8Bom(string $value): string
