@@ -43,6 +43,7 @@ final class D1_OrcamentariaContinuidadeRule implements MscRuleResultInterface, M
         'funcao',
         'subfuncao',
         'natureza_despesa',
+        'ano_inscricao',
         'natureza_conta',
     ];
 
@@ -277,6 +278,12 @@ final class D1_OrcamentariaContinuidadeRule implements MscRuleResultInterface, M
             $atributos['natureza_despesa'] = $naturezaDespesa;
         }
 
+        $anoInscricao = trim($lineData->ics['IC5'] ?? '');
+
+        if ($anoInscricao !== '') {
+            $atributos['ano_inscricao'] = $anoInscricao;
+        }
+
         $naturezaConta = strtoupper(trim($lineData->naturezaValor));
 
         if (in_array($naturezaConta, ['D', 'C'], true)) {
@@ -325,6 +332,12 @@ final class D1_OrcamentariaContinuidadeRule implements MscRuleResultInterface, M
             $atributos['natureza_despesa'] = $naturezaDespesa;
         }
 
+        $anoInscricao = $this->normalizarAtributoApi($item['ano_inscricao'] ?? null);
+
+        if ($anoInscricao !== null) {
+            $atributos['ano_inscricao'] = $anoInscricao;
+        }
+
         $naturezaConta = $item['natureza_conta'] ?? null;
 
         if (is_string($naturezaConta)) {
@@ -349,6 +362,7 @@ final class D1_OrcamentariaContinuidadeRule implements MscRuleResultInterface, M
             'funcao' => 'Função',
             'subfuncao' => 'Subfunção',
             'natureza_despesa' => 'ND',
+            'ano_inscricao' => 'AI',
             'natureza_conta' => 'Natureza',
         ];
 
