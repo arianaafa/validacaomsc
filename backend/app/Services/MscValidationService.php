@@ -14,10 +14,12 @@ use App\Services\Msc\Contracts\MscLineData;
 use App\Services\Msc\MscLineValidator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
+use ZipArchive;
 
 final class MscValidationService
 {
@@ -112,35 +114,167 @@ final class MscValidationService
             ]);
         }
 
-        $ibgeCode = $this->extractIbgeCodeFromCsvPath($path);
+        ['path' => $csvPath, 'tempDir' => $tempDir] = $this->resolveCsvPath(
+            $path,
+            $file->getClientOriginalName(),
+        );
 
-        $upload = DB::transaction(function () use ($user, $file, $periodo, $tipoMsc, $hash, $ibgeCode): MscUpload {
-            $existingUpload = $this->findExistingUpload($user, $periodo, $tipoMsc, $ibgeCode);
+        try {
+            $ibgeCode = $this->extractIbgeCodeFromCsvPath($csvPath);
 
-            if ($existingUpload !== null) {
-                $this->handleExistingUpload($existingUpload, $ibgeCode);
+            $upload = DB::transaction(function () use ($user, $file, $periodo, $tipoMsc, $hash, $ibgeCode): MscUpload {
+                $existingUpload = $this->findExistingUpload($user, $periodo, $tipoMsc, $ibgeCode);
+
+                if ($existingUpload !== null) {
+                    $this->handleExistingUpload($existingUpload, $ibgeCode);
+                }
+
+                return MscUpload::query()->create([
+                    'user_id' => $user->id,
+                    'filename' => $file->getClientOriginalName(),
+                    'hash' => $hash,
+                    'status' => MscUploadStatus::Processando,
+                    'periodo' => $periodo,
+                    'tipo_msc' => $tipoMsc,
+                    'ibge_code' => $ibgeCode,
+                ]);
+            });
+
+            $this->processCsvStream($upload, $csvPath);
+
+            $upload->refresh();
+            $upload->load('validationErrors');
+
+            return [
+                'upload' => MscUploadFormatter::format($upload),
+                'errors' => MscUploadFormatter::formatValidationErrors($upload),
+            ];
+        } finally {
+            $this->cleanupTempDirectory($tempDir);
+        }
+    }
+
+    /**
+     * @return array{path: string, tempDir: string|null}
+     */
+    private function resolveCsvPath(string $uploadPath, string $originalFilename): array
+    {
+        if (! $this->isZipUpload($uploadPath, $originalFilename)) {
+            return [
+                'path' => $uploadPath,
+                'tempDir' => null,
+            ];
+        }
+
+        return $this->extractCsvFromZip($uploadPath);
+    }
+
+    private function isZipUpload(string $path, string $originalFilename): bool
+    {
+        if (str_ends_with(strtolower($originalFilename), '.zip')) {
+            return true;
+        }
+
+        $mimeType = mime_content_type($path);
+
+        return is_string($mimeType) && in_array($mimeType, ['application/zip', 'application/x-zip-compressed'], true);
+    }
+
+    /**
+     * @return array{path: string, tempDir: string}
+     */
+    private function extractCsvFromZip(string $zipPath): array
+    {
+        $zip = new ZipArchive();
+
+        if ($zip->open($zipPath) !== true) {
+            throw ValidationException::withMessages([
+                'file' => ['Não foi possível abrir o arquivo ZIP enviado.'],
+            ]);
+        }
+
+        try {
+            $csvEntry = $this->findCsvEntryInZip($zip);
+            $contents = $zip->getFromName($csvEntry);
+
+            if ($contents === false) {
+                throw ValidationException::withMessages([
+                    'file' => ['Não foi possível extrair o CSV do arquivo ZIP.'],
+                ]);
             }
 
-            return MscUpload::query()->create([
-                'user_id' => $user->id,
-                'filename' => $file->getClientOriginalName(),
-                'hash' => $hash,
-                'status' => MscUploadStatus::Processando,
-                'periodo' => $periodo,
-                'tipo_msc' => $tipoMsc,
-                'ibge_code' => $ibgeCode,
+            $tempDir = $this->createTempDirectory();
+            $extractedPath = $tempDir.DIRECTORY_SEPARATOR.basename($csvEntry);
+
+            if (file_put_contents($extractedPath, $contents) === false) {
+                $this->cleanupTempDirectory($tempDir);
+
+                throw ValidationException::withMessages([
+                    'file' => ['Não foi possível preparar o CSV extraído do ZIP para validação.'],
+                ]);
+            }
+
+            return [
+                'path' => $extractedPath,
+                'tempDir' => $tempDir,
+            ];
+        } finally {
+            $zip->close();
+        }
+    }
+
+    private function findCsvEntryInZip(ZipArchive $zip): string
+    {
+        /** @var list<string> $csvEntries */
+        $csvEntries = [];
+
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            $entryName = $zip->getNameIndex($index);
+
+            if (! is_string($entryName) || str_ends_with($entryName, '/')) {
+                continue;
+            }
+
+            if (preg_match('#^tmp/[^/]+\.csv$#i', $entryName) === 1) {
+                $csvEntries[] = $entryName;
+            }
+        }
+
+        if ($csvEntries === []) {
+            throw ValidationException::withMessages([
+                'file' => ['O arquivo ZIP não contém um CSV na pasta tmp/.'],
             ]);
-        });
+        }
 
-        $this->processCsvStream($upload, $path);
+        if (count($csvEntries) > 1) {
+            throw ValidationException::withMessages([
+                'file' => ['O arquivo ZIP contém mais de um CSV na pasta tmp/. Envie um único arquivo.'],
+            ]);
+        }
 
-        $upload->refresh();
-        $upload->load('validationErrors');
+        return $csvEntries[0];
+    }
 
-        return [
-            'upload' => MscUploadFormatter::format($upload),
-            'errors' => MscUploadFormatter::formatValidationErrors($upload),
-        ];
+    private function createTempDirectory(): string
+    {
+        $tempDir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'msc_upload_'.bin2hex(random_bytes(8));
+
+        if (! mkdir($tempDir, 0700, true) && ! is_dir($tempDir)) {
+            throw ValidationException::withMessages([
+                'file' => ['Não foi possível preparar o diretório temporário para extrair o ZIP.'],
+            ]);
+        }
+
+        return $tempDir;
+    }
+
+    private function cleanupTempDirectory(?string $tempDir): void
+    {
+        if ($tempDir === null || ! is_dir($tempDir)) {
+            return;
+        }
+
+        File::deleteDirectory($tempDir);
     }
 
     private function findExistingUpload(

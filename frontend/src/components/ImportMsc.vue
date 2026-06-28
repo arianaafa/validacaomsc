@@ -58,8 +58,10 @@ const canSubmit = computed(
     !isSubmitting.value,
 )
 
-function isCsvFile(file: File): boolean {
-  return file.name.toLowerCase().endsWith('.csv')
+function isAllowedImportFile(file: File): boolean {
+  const lowerName = file.name.toLowerCase()
+
+  return lowerName.endsWith('.csv') || lowerName.endsWith('.zip')
 }
 
 function setSelectedFile(file: File | null): void {
@@ -68,8 +70,8 @@ function setSelectedFile(file: File | null): void {
     return
   }
 
-  if (!isCsvFile(file)) {
-    alertMessage.value = 'Apenas arquivos .csv são permitidos.'
+  if (!isAllowedImportFile(file)) {
+    alertMessage.value = 'Apenas arquivos .csv ou .zip são permitidos.'
     selectedFile.value = null
     return
   }
@@ -101,8 +103,8 @@ function handleDrop(event: DragEvent): void {
     return
   }
 
-  if (!isCsvFile(file)) {
-    alertMessage.value = 'Apenas arquivos .csv são permitidos.'
+  if (!isAllowedImportFile(file)) {
+    alertMessage.value = 'Apenas arquivos .csv ou .zip são permitidos.'
     return
   }
 
@@ -149,7 +151,7 @@ async function handleSubmit(): Promise<void> {
   const payload = buildPayload()
 
   if (payload === null) {
-    alertMessage.value = 'Selecione o período e um arquivo .csv antes de enviar.'
+    alertMessage.value = 'Selecione o período e um arquivo .csv ou .zip antes de enviar.'
     return
   }
 
@@ -222,7 +224,7 @@ async function handleSubmit(): Promise<void> {
       </p>
       <h1 class="text-3xl font-bold text-slate-900">Importar Planilha</h1>
       <p class="mt-2 text-slate-500">
-        Envie o arquivo CSV da Matriz de Saldos Contábeis para validação estrutural.
+        Envie o arquivo CSV ou ZIP (exportação SICONFI) da Matriz de Saldos Contábeis para validação estrutural.
       </p>
     </header>
 
@@ -251,7 +253,7 @@ async function handleSubmit(): Promise<void> {
       </label>
 
       <div class="grid gap-2">
-        <span class="text-sm font-semibold text-slate-700">Arquivo CSV</span>
+        <span class="text-sm font-semibold text-slate-700">Arquivo CSV ou ZIP</span>
 
         <div
           class="dropzone"
@@ -263,14 +265,14 @@ async function handleSubmit(): Promise<void> {
           <input
             id="msc-file-input"
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,.zip,text/csv,application/zip"
             class="sr-only"
             @change="handleFileInputChange"
           />
 
           <label for="msc-file-input" class="dropzone__label">
             <span class="dropzone__title">
-              Arraste o arquivo .csv aqui ou clique para selecionar
+              Arraste o arquivo .csv ou .zip aqui ou clique para selecionar
             </span>
             <span v-if="selectedFile" class="dropzone__filename">
               {{ selectedFile.name }}

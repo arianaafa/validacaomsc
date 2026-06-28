@@ -139,7 +139,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: Arquivo CSV ou TXT (máx. 40MB)
+                  description: Arquivo CSV, TXT ou ZIP SICONFI com CSV em tmp/ (máx. 40MB)
                 periodo:
                   type: string
                   pattern: '^\d{4}-(0[1-9]|1[0-2])$'

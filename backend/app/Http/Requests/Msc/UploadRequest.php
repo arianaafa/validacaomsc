@@ -26,7 +26,7 @@ final class UploadRequest extends FormRequest
             'file' => [
                 'required',
                 'file',
-                'mimes:csv,txt',
+                'mimes:csv,txt,zip',
                 'max:'.self::MAX_FILE_SIZE_KB,
             ],
             'periodo' => [
