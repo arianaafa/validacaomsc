@@ -11,8 +11,24 @@ final class D1_00021Rule implements MscRuleInterface
 {
     private const CODE = 'D1_00021';
 
-    /** Natureza devedora esperada para contas do Ativo (MCASP). */
+    private const TIPO_SALDO_FINAL = 'ending_balance';
+
     private const NATUREZA_DEVEDORA = 'D';
+
+    private const MENSAGEM_INCONSISTENCIA = 'contas do ativo com saldo invertido incorretamente.';
+
+    /**
+     * Grupos do Ativo (PCASP Estendido) com natureza devedora padrão.
+     *
+     * @var list<string>
+     */
+    private const PREFIXOS_CONTA_ATIVO = [
+        '1111',
+        '1121',
+        '1125',
+        '1231',
+        '1232',
+    ];
 
     public function getCode(): string
     {
@@ -20,40 +36,52 @@ final class D1_00021Rule implements MscRuleInterface
     }
 
     /**
-     * Contas do Ativo (classe 1) devem apresentar saldo devedor.
-     * Saldo negativo ou natureza credora indicam inversão incorreta.
+     * Contas dos grupos do Ativo devem apresentar saldo final (ending_balance) devedor.
      */
     public function validate(MscLineData $lineData): ?string
     {
-        if (! $this->isContaAtivo($lineData->conta)) {
+        if ($this->normalizeTipoValor($lineData->tipoValor) !== self::TIPO_SALDO_FINAL) {
             return null;
         }
 
-        $natureza = strtoupper(trim($lineData->naturezaValor));
-
-        if ($lineData->valor < 0.0) {
-            return sprintf(
-                'Conta do Ativo %s (linha %d) possui saldo negativo (%.2f), indicando saldo invertido.',
-                $lineData->conta,
-                $lineData->linha,
-                $lineData->valor,
-            );
+        if (! $this->isContaGrupoAtivo($lineData->conta)) {
+            return null;
         }
 
-        if ($natureza !== self::NATUREZA_DEVEDORA) {
-            return sprintf(
-                'Conta do Ativo %s (linha %d) possui natureza "%s" inconsistente; esperada natureza devedora (D).',
-                $lineData->conta,
-                $lineData->linha,
-                $lineData->naturezaValor,
-            );
+        if ($this->isNaturezaDevedora($lineData->naturezaValor)) {
+            return null;
         }
 
-        return null;
+        return self::MENSAGEM_INCONSISTENCIA;
     }
 
-    private function isContaAtivo(string $conta): bool
+    private function isContaGrupoAtivo(string $conta): bool
     {
-        return str_starts_with(trim($conta), '1');
+        $contaNormalizada = $this->normalizeConta($conta);
+
+        foreach (self::PREFIXOS_CONTA_ATIVO as $prefixo) {
+            if (str_starts_with($contaNormalizada, $prefixo)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isNaturezaDevedora(string $naturezaValor): bool
+    {
+        $natureza = strtoupper(trim($naturezaValor));
+
+        return $natureza === self::NATUREZA_DEVEDORA || $natureza === 'DEVEDORA';
+    }
+
+    private function normalizeConta(string $conta): string
+    {
+        return str_replace('.', '', trim($conta));
+    }
+
+    private function normalizeTipoValor(string $tipoValor): string
+    {
+        return strtolower(trim($tipoValor));
     }
 }
