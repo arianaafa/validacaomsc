@@ -23,7 +23,7 @@ onMounted(async () => {
 <template>
   <main class="home">
     <section class="hero">
-      <p class="eyebrow">validaMSC</p>
+      <p class="eyebrow">Audita MSC</p>
       <h1>Backend Laravel + Frontend Vue 3</h1>
       <p class="subtitle">
         Stack containerizada com Docker Compose e PostgreSQL.

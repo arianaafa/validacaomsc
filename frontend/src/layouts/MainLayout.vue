@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import AuraIcon from '@/components/brand/AuraIcon.vue'
+import AuraLogo from '@/components/brand/AuraLogo.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
 
 const isSidebarCollapsed = ref(false)
 const isMobileMenuOpen = ref(false)
@@ -30,6 +33,7 @@ const navLinkActiveClass =
 
 async function handleLogout(): Promise<void> {
   await auth.logout()
+  await router.replace({ name: 'login' })
 }
 
 function toggleMobileMenu(): void {
@@ -70,34 +74,12 @@ function toggleSidebarCollapse(): void {
       >
         <RouterLink
           to="/"
-          class="brand-link flex items-center gap-3 font-bold tracking-tight text-white"
+          class="brand-link flex items-center font-bold tracking-tight text-white"
           :class="isSidebarCollapsed ? 'justify-center' : ''"
           @click="closeMobileMenu"
         >
-          <span
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-bold shadow-lg shadow-indigo-950/40"
-            aria-hidden="true"
-          >
-            <svg
-              class="h-5 w-5 text-white"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M8 12l2.5 2.5L16 9" />
-            </svg>
-          </span>
-
-          <div v-if="!isSidebarCollapsed" class="flex min-w-0 flex-col">
-            <span class="truncate text-base font-bold leading-tight">Audita MSC</span>
-            <span class="truncate text-[11px] font-medium tracking-wide text-zinc-500">
-              Aura Tech
-            </span>
-          </div>
+          <AuraIcon v-if="isSidebarCollapsed" :size="36" />
+          <AuraLogo v-else dark />
         </RouterLink>
       </div>
 

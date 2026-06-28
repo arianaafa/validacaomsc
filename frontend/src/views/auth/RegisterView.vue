@@ -32,7 +32,7 @@ async function handleSubmit(): Promise<void> {
 <template>
   <section class="auth-card">
     <header>
-      <p class="eyebrow">validaMSC</p>
+      <p class="eyebrow">Audita MSC</p>
       <h1>Criar conta</h1>
       <p class="subtitle">Cadastre-se para usar a plataforma.</p>
     </header>

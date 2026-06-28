@@ -1,11 +1,11 @@
-# validaMSC
+# Audita MSC
 
 Monorepo com backend Laravel, frontend Vue 3, PostgreSQL e Docker Compose.
 
 ## Estrutura
 
 ```
-validaMSC/
+Audita MSC/
 ├── backend/          # API Laravel
 ├── frontend/         # SPA Vue 3 + TypeScript + Vue Router
 ├── docker/           # Dockerfile PHP e config Nginx

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import AuraLogo from '@/components/brand/AuraLogo.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -28,12 +29,13 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <div class="min-h-screen w-full flex items-center justify-center bg-gray-50 px-4">
+  <div class="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 px-4 py-10">
+    <div class="mb-8 flex justify-center">
+      <AuraLogo layout="vertical" :icon-size="112" />
+    </div>
+
     <section class="w-full max-w-md bg-white p-8 rounded-xl shadow-md">
       <header class="mb-6">
-        <p class="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">
-          validaMSC
-        </p>
         <h1 class="text-3xl font-bold text-slate-900">Entrar</h1>
         <p class="mt-2 text-slate-500">Acesse sua conta para continuar.</p>
       </header>

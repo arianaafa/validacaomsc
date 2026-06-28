@@ -1,12 +1,13 @@
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import type { CellHookData } from 'jspdf-autotable'
 import {
   formatEnteLabel,
   getMunicipioByCode,
   hasEnteData,
 } from '@/services/ibgeApi'
 import type { MunicipioEnte, MscValidationError, MscValidationErrorTipo } from '@/types/msc'
+
+type PdfDocument = InstanceType<typeof jsPDF>
 
 const BRAND_COLOR: [number, number, number] = [30, 58, 95]
 const ZEBRA_COLOR: [number, number, number] = [248, 250, 252]
@@ -15,6 +16,7 @@ const ALERT_TEXT_COLOR: [number, number, number] = [120, 83, 14]
 const MUTED_TEXT_COLOR: [number, number, number] = [100, 116, 139]
 
 const PAGE_MARGIN_X = 14
+const PAGE_TOP_MARGIN = 14
 const FOOTER_Y_OFFSET = 10
 const TABLE_FONT_SIZE = 8
 const TIPO_COLUMN_INDEX = 3
@@ -30,6 +32,18 @@ export interface MscPdfReportOptions {
 interface SummaryCounts {
   erros: number
   alertas: number
+}
+
+interface TipoCellParseHookData {
+  section: 'head' | 'body' | 'foot'
+  column: { index: number }
+  cell: {
+    raw: unknown
+    styles: {
+      textColor?: number | [number, number, number]
+      fontStyle?: string
+    }
+  }
 }
 
 function formatGenerationDate(date: Date): string {
@@ -86,7 +100,7 @@ function sanitizeOutputFilename(filename: string): string {
   return `${sanitized}-relatorio.pdf`
 }
 
-function drawBrandBar(doc: jsPDF): void {
+function drawBrandBar(doc: PdfDocument): void {
   const pageWidth = doc.internal.pageSize.getWidth()
 
   doc.setFillColor(...BRAND_COLOR)
@@ -94,7 +108,7 @@ function drawBrandBar(doc: jsPDF): void {
 }
 
 function drawExecutiveHeader(
-  doc: jsPDF,
+  doc: PdfDocument,
   analyzedFilename: string,
   periodo: string,
   generatedAt: Date,
@@ -106,7 +120,7 @@ function drawExecutiveHeader(
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
   doc.setTextColor(...BRAND_COLOR)
-  doc.text('validaMSC - Relatório de Inconsistências', PAGE_MARGIN_X, cursorY)
+  doc.text('Audita MSC - Relatório de Inconsistências', PAGE_MARGIN_X, cursorY)
 
   cursorY += 8
   doc.setFont('helvetica', 'normal')
@@ -150,7 +164,7 @@ async function resolveEnte(options?: MscPdfReportOptions): Promise<MunicipioEnte
 }
 
 function drawSummaryCards(
-  doc: jsPDF,
+  doc: PdfDocument,
   startY: number,
   summary: SummaryCounts,
 ): number {
@@ -186,7 +200,7 @@ function drawSummaryCards(
   return startY + cardHeight + 10
 }
 
-function applyTipoCellStyle(data: CellHookData): void {
+function applyTipoCellStyle(data: TipoCellParseHookData): void {
   if (data.section !== 'body' || data.column.index !== TIPO_COLUMN_INDEX) {
     return
   }
@@ -206,7 +220,7 @@ function applyTipoCellStyle(data: CellHookData): void {
   }
 }
 
-function addPageFooters(doc: jsPDF): void {
+function addPageFooters(doc: PdfDocument): void {
   const totalPages = doc.getNumberOfPages()
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
@@ -225,11 +239,24 @@ function addPageFooters(doc: jsPDF): void {
   }
 }
 
-function resolveDescriptionColumnWidth(doc: jsPDF): number {
+function resolveDescriptionColumnWidth(doc: PdfDocument): number {
   const pageWidth = doc.internal.pageSize.getWidth()
   const fixedColumnsWidth = 18 + 30 + 26 + 18
 
   return pageWidth - PAGE_MARGIN_X * 2 - fixedColumnsWidth
+}
+
+function resolveOutputFilename(
+  analyzedFilename: string,
+  outputFilename?: string,
+): string {
+  const customName = outputFilename?.trim()
+
+  if (customName === undefined || customName === '') {
+    return sanitizeOutputFilename(analyzedFilename)
+  }
+
+  return customName.endsWith('.pdf') ? customName : `${customName}.pdf`
 }
 
 export function useMscPdfReport(): {
@@ -279,7 +306,7 @@ export function useMscPdfReport(): {
         head: [['Linha', 'Conta', 'Regra', 'Tipo', 'Descrição']],
         body: buildTableBody(errors),
         margin: {
-          top: tableStartY,
+          top: PAGE_TOP_MARGIN,
           right: PAGE_MARGIN_X,
           bottom: 18,
           left: PAGE_MARGIN_X,
@@ -312,7 +339,7 @@ export function useMscPdfReport(): {
             cellWidth: descWidth,
           },
         },
-        didParseCell: (data: CellHookData): void => {
+        didParseCell: (data: TipoCellParseHookData): void => {
           applyTipoCellStyle(data)
         },
       })
@@ -320,13 +347,7 @@ export function useMscPdfReport(): {
 
     addPageFooters(doc)
 
-    const outputFilename = options?.outputFilename?.trim()
-      ? options.outputFilename.trim().endsWith('.pdf')
-        ? options.outputFilename.trim()
-        : `${options.outputFilename.trim()}.pdf`
-      : sanitizeOutputFilename(analyzedFilename)
-
-    doc.save(outputFilename)
+    doc.save(resolveOutputFilename(analyzedFilename, options?.outputFilename))
   }
 
   return { exportToPdf }

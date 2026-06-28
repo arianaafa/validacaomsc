@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: validaMSC API
+  title: Audita MSC API
   description: API REST do validaMSC para validação de MSC.
   version: 1.0.0
 

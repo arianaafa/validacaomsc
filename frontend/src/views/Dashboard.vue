@@ -134,7 +134,7 @@ onMounted((): void => {
           Painel de Competências
         </h2>
         <p class="text-sm text-slate-500">
-          Visão consolidada das validações contábeis enviadas ao validaMSC.
+          Visão consolidada das validações contábeis enviadas ao Audita MSC.
         </p>
       </div>
 

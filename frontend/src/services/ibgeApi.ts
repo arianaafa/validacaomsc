@@ -35,7 +35,11 @@ function readCachedEnte(code: string): MunicipioEnte | null {
       && typeof parsed.uf === 'string'
       && typeof parsed.estado === 'string'
     ) {
-      return parsed
+      return {
+        municipio: parsed.municipio,
+        uf: parsed.uf,
+        estado: parsed.estado,
+      }
     }
   } catch {
     return null
