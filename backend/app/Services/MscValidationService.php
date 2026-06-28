@@ -115,10 +115,10 @@ final class MscValidationService
         $ibgeCode = $this->extractIbgeCodeFromCsvPath($path);
 
         $upload = DB::transaction(function () use ($user, $file, $periodo, $tipoMsc, $hash, $ibgeCode): MscUpload {
-            $existingUpload = $this->findExistingUpload($user, $periodo, $tipoMsc);
+            $existingUpload = $this->findExistingUpload($user, $periodo, $tipoMsc, $ibgeCode);
 
             if ($existingUpload !== null) {
-                $this->handleExistingUpload($existingUpload);
+                $this->handleExistingUpload($existingUpload, $ibgeCode);
             }
 
             return MscUpload::query()->create([
@@ -143,31 +143,46 @@ final class MscValidationService
         ];
     }
 
-    private function findExistingUpload(User $user, string $periodo, MscTipo $tipoMsc): ?MscUpload
-    {
-        return MscUpload::query()
+    private function findExistingUpload(
+        User $user,
+        string $periodo,
+        MscTipo $tipoMsc,
+        ?string $ibgeCode,
+    ): ?MscUpload {
+        $query = MscUpload::query()
             ->where('user_id', $user->id)
             ->where('periodo', $periodo)
-            ->where('tipo_msc', $tipoMsc)
-            ->first();
+            ->where('tipo_msc', $tipoMsc);
+
+        if ($ibgeCode === null || $ibgeCode === '') {
+            $query->whereNull('ibge_code');
+        } else {
+            $query->where('ibge_code', $ibgeCode);
+        }
+
+        return $query->first();
     }
 
-    private function handleExistingUpload(MscUpload $existingUpload): void
+    private function handleExistingUpload(MscUpload $existingUpload, ?string $ibgeCode): void
     {
+        $enteLabel = $this->formatEnteLabelForMessage($existingUpload, $ibgeCode);
+
         if (
             $existingUpload->status === MscUploadStatus::Processando
             || $existingUpload->status === MscUploadStatus::Sucesso
         ) {
             $mensagem = match ($existingUpload->status) {
                 MscUploadStatus::Processando => sprintf(
-                    'Já existe um envio em processamento para o período %s (%s). Aguarde a conclusão antes de enviar novamente.',
+                    'Já existe um envio em processamento para o período %s (%s)%s. Aguarde a conclusão antes de enviar novamente.',
                     $existingUpload->periodo,
                     $existingUpload->tipo_msc->value,
+                    $enteLabel,
                 ),
                 MscUploadStatus::Sucesso => sprintf(
-                    'O período %s (%s) já está consolidado com sucesso. Não é permitido um novo envio.',
+                    'O período %s (%s)%s já está consolidado com sucesso. Não é permitido um novo envio para o mesmo ente.',
                     $existingUpload->periodo,
                     $existingUpload->tipo_msc->value,
+                    $enteLabel,
                 ),
             };
 
@@ -184,6 +199,25 @@ final class MscValidationService
 
             return;
         }
+    }
+
+    private function formatEnteLabelForMessage(MscUpload $upload, ?string $ibgeCode): string
+    {
+        $code = $ibgeCode ?? $upload->ibge_code;
+
+        if ($code === null || $code === '') {
+            return '';
+        }
+
+        $ente = $upload->ente;
+        $municipio = $ente['municipio'] ?? '';
+        $uf = $ente['uf'] ?? '';
+
+        if ($municipio !== '' && $uf !== '') {
+            return sprintf(' para %s - %s (IBGE %s)', $municipio, $uf, $code);
+        }
+
+        return sprintf(' para o ente IBGE %s', $code);
     }
 
     private function processCsvStream(MscUpload $upload, string $path): void
@@ -291,7 +325,7 @@ final class MscValidationService
     }
 
     /**
-     * @param resource $handle
+     * @param  resource  $handle
      */
     private function processDataRows(MscUpload $upload, $handle): void
     {
@@ -470,7 +504,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<string|null> $row
+     * @param  list<string|null>  $row
      */
     private function isEmptyDataRow(array $row): bool
     {
@@ -484,7 +518,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<string|null> $row
+     * @param  list<string|null>  $row
      */
     private function parseLineData(int $lineNumber, array $row): MscLineData
     {
@@ -501,8 +535,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<string> $columns
-     *
+     * @param  list<string>  $columns
      * @return array<string, string>
      */
     private function buildIcsFromRow(array $columns): array
@@ -563,7 +596,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<array<string, int|string|null>> $errorsToInsert
+     * @param  list<array<string, int|string|null>>  $errorsToInsert
      */
     private function flushErrorsToInsert(array &$errorsToInsert): void
     {
@@ -576,7 +609,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<string|null> $row
+     * @param  list<string|null>  $row
      */
     private function validateSiconfiMetadata(MscUpload $upload, array $row, int $lineNumber): bool
     {
@@ -611,7 +644,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<string|null> $row
+     * @param  list<string|null>  $row
      */
     private function validateHeaderRow(MscUpload $upload, array $row, int $lineNumber): bool
     {
@@ -651,7 +684,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<string|null> $row
+     * @param  list<string|null>  $row
      */
     private function extractSiconfiCode(array $row): ?string
     {
@@ -681,8 +714,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<string|null> $row
-     *
+     * @param  list<string|null>  $row
      * @return list<string>
      */
     private function normalizeCsvRow(array $row): array
@@ -698,8 +730,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<string> $columns
-     *
+     * @param  list<string>  $columns
      * @return list<array{position: int, expected: string, found: string}>
      */
     private function findInvalidHeaderColumns(array $columns): array
@@ -722,7 +753,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<array{position: int, expected: string, found: string}> $invalidColumns
+     * @param  list<array{position: int, expected: string, found: string}>  $invalidColumns
      */
     private function formatInvalidHeaderDescription(array $invalidColumns): string
     {
@@ -785,7 +816,7 @@ final class MscValidationService
     }
 
     /**
-     * @param list<string|null> $firstRow
+     * @param  list<string|null>  $firstRow
      */
     private function persistIbgeCode(MscUpload $upload, array $firstRow): ?string
     {
