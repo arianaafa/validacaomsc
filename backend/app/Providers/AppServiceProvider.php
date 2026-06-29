@@ -12,6 +12,7 @@ use App\Services\Msc\Rules\D1_00021Rule;
 use App\Services\Msc\Rules\D1_00034Rule;
 use App\Services\Msc\Rules\D1_00035Rule;
 use App\Services\Msc\Rules\D1_00036Rule;
+use App\Services\Msc\Rules\D1_00037Rule;
 use App\Services\Msc\Rules\D1_00025Rule;
 use App\Services\Msc\Rules\D1_00026Rule;
 use App\Services\Msc\Rules\D1_00027Rule;
@@ -39,6 +40,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(D1_00018Rule::class, static fn (): D1_00018Rule => new D1_00018Rule());
 
         $this->app->singleton(D1_00028Rule::class, static fn (): D1_00028Rule => new D1_00028Rule());
+
+        $this->app->singleton(D1_00037Rule::class, static fn (): D1_00037Rule => new D1_00037Rule());
 
         $this->app->singleton(D1_00034Rule::class, static fn (): D1_00034Rule => new D1_00034Rule());
 
@@ -82,6 +85,7 @@ class AppServiceProvider extends ServiceProvider
                 new D1_00032Rule(),
                 new D1_00033Rule(),
                 $app->make(D1_00028Rule::class),
+                $app->make(D1_00037Rule::class),
                 $app->make(D1_00018Rule::class),
                 $app->make(D1_PatrimonialContinuidadeRule::class),
                 $app->make(D1_OrcamentariaContinuidadeRule::class),
