@@ -199,6 +199,15 @@ final class MscRuleSeeder extends Seeder
                 'is_implemented' => true,
             ],
             [
+                'code' => 'D1_00039',
+                'name' => 'Quantidade de MSC com despesas orçamentárias registradas indevidamente com recursos condicionados na codificação de fontes.',
+                'validation_type' => MscRuleValidationType::Linha,
+                'target_group' => 'Execução da Despesa Orçamentária (contas com prefixo 62 e 63)',
+                'objective' => 'Verifica se há execução de despesas (classes 62 e 63) vinculadas a fontes de recursos condicionados por meio da validação do segundo dígito do código da fonte.',
+                'error_message' => 'despesa orçamentária registrada com fonte de recursos condicionada (dígito 9 na segunda posição da fonte).',
+                'is_implemented' => true,
+            ],
+            [
                 'code' => 'D1_00044',
                 'name' => 'Verifica se há a informação complementar AI - Ano de Inscrição de Restos a Pagar na MSC do ente.',
                 'validation_type' => MscRuleValidationType::Linha,
