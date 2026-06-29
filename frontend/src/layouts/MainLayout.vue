@@ -140,6 +140,30 @@ function toggleSidebarCollapse(): void {
 
           <li>
             <RouterLink
+              to="/msc/rules"
+              :class="[navLinkBaseClass, isSidebarCollapsed ? 'justify-center px-2' : 'px-3']"
+              :active-class="navLinkActiveClass"
+              @click="closeMobileMenu"
+            >
+              <svg
+                class="h-5 w-5 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+              </svg>
+              <span v-if="!isSidebarCollapsed">Regras de Validação</span>
+            </RouterLink>
+          </li>
+
+          <li>
+            <RouterLink
               to="/settings"
               :class="[navLinkBaseClass, isSidebarCollapsed ? 'justify-center px-2' : 'px-3']"
               :active-class="navLinkActiveClass"
@@ -262,7 +286,7 @@ function toggleSidebarCollapse(): void {
 
       <main class="flex-1 bg-slate-50 p-4 md:p-8 flex justify-center items-start">
         <!-- Contêiner wrapper para limitar a largura máxima do formulário e centralizar -->
-        <div class="w-full max-w-5xl">
+        <div class="w-full max-w-7xl">
           <RouterView />
         </div>
       </main>

@@ -28,6 +28,12 @@ const router = createRouter({
           meta: { title: 'Importar MSC' },
         },
         {
+          path: 'msc/rules',
+          name: 'msc-rules',
+          component: () => import('../views/MscRules/Index.vue'),
+          meta: { title: 'Regras de Validação' },
+        },
+        {
           path: 'settings',
           name: 'settings',
           component: () => import('../views/SettingsView.vue'),

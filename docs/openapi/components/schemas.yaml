@@ -126,3 +126,93 @@ MscUploadResponse:
   properties:
     upload:
       $ref: '#/MscUpload'
+
+MscRuleValidationType:
+  type: string
+  enum: [linha, global, agrupamento]
+  example: linha
+
+MscRule:
+  type: object
+  required: [id, code, name, validation_type, target_group, objective, error_message]
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440000
+    code:
+      type: string
+      example: D1_00021
+    name:
+      type: string
+      example: Saldo invertido do Ativo
+    validation_type:
+      $ref: '#/MscRuleValidationType'
+    target_group:
+      type: string
+      example: Grupos do Ativo (1111, 1121, 1125, 1231, 1232)
+    objective:
+      type: string
+      example: Garantir que contas do Ativo apresentem saldo final com natureza devedora.
+    error_message:
+      type: string
+      example: contas do ativo com saldo invertido incorretamente.
+    is_implemented:
+      type: boolean
+      example: true
+      description: Indica se a regra está implementada no sistema (coluna STATUS da planilha SICONFI)
+    created_at:
+      type: string
+      format: date-time
+      nullable: true
+    updated_at:
+      type: string
+      format: date-time
+      nullable: true
+
+MscRulePaginatedResponse:
+  type: object
+  required: [current_page, data, per_page, total]
+  properties:
+    current_page:
+      type: integer
+      example: 1
+    data:
+      type: array
+      items:
+        $ref: '#/MscRule'
+    first_page_url:
+      type: string
+      format: uri
+    from:
+      type: integer
+      nullable: true
+    last_page:
+      type: integer
+    last_page_url:
+      type: string
+      format: uri
+    links:
+      type: array
+      items:
+        type: object
+    next_page_url:
+      type: string
+      format: uri
+      nullable: true
+    path:
+      type: string
+      format: uri
+    per_page:
+      type: integer
+      example: 15
+    prev_page_url:
+      type: string
+      format: uri
+      nullable: true
+    to:
+      type: integer
+      nullable: true
+    total:
+      type: integer
+      example: 16

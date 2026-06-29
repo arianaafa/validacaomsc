@@ -124,6 +124,40 @@ paths:
         '401':
           $ref: './components/responses.yaml#/Error401'
 
+  /v1/msc-rules:
+    get:
+      tags: [MSC]
+      summary: Lista regras de validação da MSC
+      description: |
+        Retorna o quadro informativo de regras implementadas no sistema,
+        com busca por código, nome ou objetivo e filtro por tipo de validação.
+      parameters:
+        - $ref: './components/parameters.yaml#/Page'
+        - $ref: './components/parameters.yaml#/PerPage'
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+          description: Busca por código, nome ou objetivo da regra
+        - name: validation_type
+          in: query
+          required: false
+          schema:
+            $ref: './components/schemas.yaml#/MscRuleValidationType'
+      responses:
+        '200':
+          description: Lista paginada de regras
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas.yaml#/MscRulePaginatedResponse'
+        '401':
+          $ref: './components/responses.yaml#/Error401'
+        '422':
+          $ref: './components/responses.yaml#/Error422'
+
   /msc/uploads:
     post:
       tags: [MSC]
