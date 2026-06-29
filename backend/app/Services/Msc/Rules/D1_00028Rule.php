@@ -4,79 +4,95 @@ declare(strict_types=1);
 
 namespace App\Services\Msc\Rules;
 
+use App\Services\Msc\Contracts\MscFileFinalizerRuleInterface;
 use App\Services\Msc\Contracts\MscLineData;
-use App\Services\Msc\Contracts\MscRuleInterface;
+use App\Services\Msc\Contracts\MscStatefulRuleInterface;
 
-final class D1_00028Rule implements MscRuleInterface
+final class D1_00028Rule implements MscFileFinalizerRuleInterface, MscStatefulRuleInterface
 {
     private const CODE = 'D1_00028';
 
-    private const IC_ATRIBUTO_FINANCEIRO = 'F';
+    private const MENSAGEM_INCONSISTENCIA = 'Não foram enviados valores diferentes de zero em todas as classes de contas (Patrimonial, orçamentária e controle) na MSC.';
 
-    private const IC_FONTE_RECURSOS = 'FR';
+    private bool $patrimonialComValor = false;
 
-    /** Valor do TIPO que indica atributo financeiro ativo. */
-    private const TIPO_ATIVO = '1';
+    private bool $orcamentariaComValor = false;
+
+    private bool $controleComValor = false;
 
     public function getCode(): string
     {
         return self::CODE;
     }
 
+    public function prepare(string $idEnte, int $ano, int $mes, string $tipoMatriz): void
+    {
+        $this->reset();
+    }
+
+    public function reset(): void
+    {
+        $this->patrimonialComValor = false;
+        $this->orcamentariaComValor = false;
+        $this->controleComValor = false;
+    }
+
     /**
-     * Contas com atributo financeiro (F) exigem detalhamento da Fonte de Recursos (FR).
+     * Acumula a presença de valores não zerados por dimensão de classe contábil.
      */
     public function validate(MscLineData $lineData): ?string
     {
-        if (! $this->isAtributoFinanceiroAtivo($lineData->ics)) {
+        if ($lineData->valor == 0.0) {
             return null;
         }
 
-        $fonteRecursos = $this->resolveTipoPorIc($lineData->ics, self::IC_FONTE_RECURSOS);
+        match ($this->resolveDimensaoClasse($lineData->conta)) {
+            'patrimonial' => $this->patrimonialComValor = true,
+            'orcamentaria' => $this->orcamentariaComValor = true,
+            'controle' => $this->controleComValor = true,
+            default => null,
+        };
 
-        if ($fonteRecursos !== '') {
+        return null;
+    }
+
+    public function finalizeFile(): ?string
+    {
+        if ($this->patrimonialComValor && $this->orcamentariaComValor && $this->controleComValor) {
             return null;
         }
 
-        return sprintf(
-            'Conta %s (linha %d) possui atributo financeiro (F) ativo sem detalhamento de Fonte de Recursos (FR).',
-            $lineData->conta,
-            $lineData->linha,
-        );
+        return self::MENSAGEM_INCONSISTENCIA;
     }
 
-    /**
-     * @param array<string, string> $ics
-     */
-    private function isAtributoFinanceiroAtivo(array $ics): bool
+    private function resolveDimensaoClasse(string $conta): ?string
     {
-        for ($indice = 1; $indice <= 6; $indice++) {
-            $ic = strtoupper(trim($ics["IC{$indice}"] ?? ''));
-            $tipo = trim($ics["TIPO{$indice}"] ?? '');
+        $contaNormalizada = $this->normalizeConta($conta);
+        $primeiroDigito = $contaNormalizada[0] ?? '';
 
-            if ($ic === self::IC_ATRIBUTO_FINANCEIRO && $tipo === self::TIPO_ATIVO) {
-                return true;
-            }
+        if ($primeiroDigito === '' || ! ctype_digit($primeiroDigito)) {
+            return null;
         }
 
-        return false;
+        $digito = (int) $primeiroDigito;
+
+        if (in_array($digito, [1, 2, 3, 4], true)) {
+            return 'patrimonial';
+        }
+
+        if (in_array($digito, [5, 6], true)) {
+            return 'orcamentaria';
+        }
+
+        if (in_array($digito, [7, 8], true)) {
+            return 'controle';
+        }
+
+        return null;
     }
 
-    /**
-     * @param array<string, string> $ics
-     */
-    private function resolveTipoPorIc(array $ics, string $codigoIc): string
+    private function normalizeConta(string $conta): string
     {
-        $codigoIc = strtoupper($codigoIc);
-
-        for ($indice = 1; $indice <= 6; $indice++) {
-            $ic = strtoupper(trim($ics["IC{$indice}"] ?? ''));
-
-            if ($ic === $codigoIc) {
-                return trim($ics["TIPO{$indice}"] ?? '');
-            }
-        }
-
-        return '';
+        return str_replace('.', '', trim($conta));
     }
 }

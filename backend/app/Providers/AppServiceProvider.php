@@ -10,6 +10,7 @@ use App\Services\Msc\Rules\D1_00017Rule;
 use App\Services\Msc\Rules\D1_00018Rule;
 use App\Services\Msc\Rules\D1_00021Rule;
 use App\Services\Msc\Rules\D1_00025Rule;
+use App\Services\Msc\Rules\D1_00026Rule;
 use App\Services\Msc\Rules\D1_00027Rule;
 use App\Services\Msc\Rules\D1_00028Rule;
 use App\Services\Msc\Rules\D1_ContinuidadeSaldoRule;
@@ -28,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SiconfiClient::class);
 
         $this->app->singleton(D1_00018Rule::class, static fn (): D1_00018Rule => new D1_00018Rule());
+
+        $this->app->singleton(D1_00028Rule::class, static fn (): D1_00028Rule => new D1_00028Rule());
 
         $this->app->singleton(D1_ContinuidadeSaldoRule::class, static fn (): D1_ContinuidadeSaldoRule => new D1_ContinuidadeSaldoRule());
 
@@ -54,8 +57,9 @@ class AppServiceProvider extends ServiceProvider
                 new D1_00017Rule(),
                 new D1_00021Rule(),
                 new D1_00025Rule(),
+                new D1_00026Rule(),
                 new D1_00027Rule(),
-                new D1_00028Rule(),
+                $app->make(D1_00028Rule::class),
                 $app->make(D1_00018Rule::class),
                 $app->make(D1_PatrimonialContinuidadeRule::class),
                 $app->make(D1_OrcamentariaContinuidadeRule::class),

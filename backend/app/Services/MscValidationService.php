@@ -535,6 +535,25 @@ final class MscValidationService
                 return;
             }
 
+            foreach ($this->lineValidator->finalizeFile() as $fileError) {
+                $errorsToInsert[] = $this->buildErrorRecord(
+                    $upload,
+                    0,
+                    '',
+                    $fileError['codigo_regra'],
+                    $fileError['descricao'],
+                    MscValidationErrorTipo::from($fileError['tipo']),
+                );
+
+                if ($fileError['tipo'] === MscValidationErrorTipo::Erro->value) {
+                    $hasValidationErrors = true;
+                }
+
+                if (count($errorsToInsert) >= self::BATCH_INSERT_SIZE) {
+                    $this->flushErrorsToInsert($errorsToInsert);
+                }
+            }
+
             if ($hasValidationErrors) {
                 $this->flushErrorsToInsert($errorsToInsert);
                 $this->markUploadAsValidationError($upload, $totalLines);

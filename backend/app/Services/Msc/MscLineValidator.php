@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Msc;
 
+use App\Services\Msc\Contracts\MscFileFinalizerRuleInterface;
 use App\Services\Msc\Contracts\MscLineData;
 use App\Services\Msc\Contracts\MscRuleInterface;
 use App\Services\Msc\Contracts\MscRuleResultInterface;
@@ -65,6 +66,34 @@ final class MscLineValidator
             }
 
             $message = $rule->validate($lineData);
+
+            if ($message === null) {
+                continue;
+            }
+
+            $errors[] = [
+                'codigo_regra' => $rule->getCode(),
+                'descricao' => $message,
+                'tipo' => 'erro',
+            ];
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @return list<array{codigo_regra: string, descricao: string, tipo: string}>
+     */
+    public function finalizeFile(): array
+    {
+        $errors = [];
+
+        foreach ($this->rules as $rule) {
+            if (! $rule instanceof MscFileFinalizerRuleInterface) {
+                continue;
+            }
+
+            $message = $rule->finalizeFile();
 
             if ($message === null) {
                 continue;
