@@ -80,10 +80,13 @@ async function handleSubmit(): Promise<void> {
         </button>
       </form>
 
-      <p class="mt-5 text-center text-slate-500">
-        Não tem conta?
-        <RouterLink to="/register" class="font-semibold text-blue-600 hover:underline">
-          Criar cadastro
+      <p class="mt-5 text-center text-sm text-slate-500">
+        Não possui uma instância para o seu município?
+        <RouterLink
+          to="/solicitar-demonstracao"
+          class="font-semibold text-indigo-600 hover:underline"
+        >
+          Solicitar Demonstração / Contato Comercial
         </RouterLink>
       </p>
     </section>

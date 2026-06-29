@@ -48,10 +48,14 @@ const router = createRouter({
       meta: { guestOnly: true },
     },
     {
+      path: '/solicitar-demonstracao',
+      name: 'lead-contact',
+      component: () => import('../views/Leads/ContactForm.vue'),
+      meta: { guestOnly: true, title: 'Solicitar Demonstração' },
+    },
+    {
       path: '/register',
-      name: 'register',
-      component: () => import('../views/auth/RegisterView.vue'),
-      meta: { guestOnly: true },
+      redirect: { name: 'lead-contact' },
     },
   ],
 })

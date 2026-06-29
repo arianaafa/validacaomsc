@@ -54,24 +54,27 @@ paths:
         '422':
           $ref: './components/responses.yaml#/Error422'
 
-  /register:
+  /v1/lead-requests:
     post:
-      tags: [Autenticação]
-      summary: Registra novo usuário e emite token de acesso
+      tags: [Leads]
+      summary: Registra solicitação de demonstração / contato comercial
+      description: |
+        Endpoint público para captura de leads de municípios interessados
+        em uma instância dedicada do Audita MSC (modelo single-tenant).
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: './components/schemas.yaml#/RegisterRequest'
+              $ref: './components/schemas.yaml#/StoreLeadRequest'
       responses:
         '201':
-          description: Usuário registrado com sucesso
+          description: Solicitação registrada com sucesso
           content:
             application/json:
               schema:
-                $ref: './components/schemas.yaml#/LoginResponse'
+                $ref: './components/schemas.yaml#/LeadRequestResponse'
         '422':
           $ref: './components/responses.yaml#/Error422'
 

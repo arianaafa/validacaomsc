@@ -216,3 +216,80 @@ MscRulePaginatedResponse:
     total:
       type: integer
       example: 16
+
+LeadRequestRole:
+  type: string
+  enum: [secretario, contador, auditor, outros]
+  example: contador
+
+LeadRequestStatus:
+  type: string
+  enum: [pendente, contatado, concluido]
+  example: pendente
+
+StoreLeadRequest:
+  type: object
+  required: [name, email, phone, organization_name, role]
+  properties:
+    name:
+      type: string
+      maxLength: 255
+      example: Maria Silva
+    email:
+      type: string
+      format: email
+      maxLength: 255
+      example: maria.silva@prefeitura.gov.br
+    phone:
+      type: string
+      maxLength: 20
+      example: '(83) 98765-4321'
+    organization_name:
+      type: string
+      maxLength: 255
+      example: Prefeitura Municipal de João Pessoa
+    role:
+      $ref: '#/LeadRequestRole'
+    message:
+      type: string
+      maxLength: 2000
+      nullable: true
+      example: Gostaríamos de conhecer a instância dedicada para validação da MSC.
+
+LeadRequest:
+  type: object
+  required: [id, name, email, phone, organization_name, role, status]
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    email:
+      type: string
+      format: email
+    phone:
+      type: string
+    organization_name:
+      type: string
+    role:
+      $ref: '#/LeadRequestRole'
+    message:
+      type: string
+      nullable: true
+    status:
+      $ref: '#/LeadRequestStatus'
+    created_at:
+      type: string
+      format: date-time
+      nullable: true
+
+LeadRequestResponse:
+  type: object
+  required: [message, lead_request]
+  properties:
+    message:
+      type: string
+      example: Solicitação recebida com sucesso. Nossa equipe entrará em contato em breve.
+    lead_request:
+      $ref: '#/LeadRequest'

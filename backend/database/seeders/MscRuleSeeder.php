@@ -190,6 +190,15 @@ final class MscRuleSeeder extends Seeder
                 'is_implemented' => true,
             ],
             [
+                'code' => 'D1_00038',
+                'name' => 'Quantidade de MSC com contas de previsão e execução orçamentária com saldos invertidos',
+                'validation_type' => MscRuleValidationType::Linha,
+                'target_group' => 'Classes 5 e 6 — grupos 5.1/6.2/6.3 (natureza D) e 5.2/5.3/6.1 (natureza C)',
+                'objective' => 'Verifica contas das classes 5 e 6 com saldo final (ending_balance) diferente de zero cuja natureza contábil está invertida em relação ao padrão do PCASP Estendido.',
+                'error_message' => 'contas de previsão e execução orçamentária com saldo invertido incorretamente.',
+                'is_implemented' => true,
+            ],
+            [
                 'code' => 'D1_00044',
                 'name' => 'Verifica se há a informação complementar AI - Ano de Inscrição de Restos a Pagar na MSC do ente.',
                 'validation_type' => MscRuleValidationType::Linha,
