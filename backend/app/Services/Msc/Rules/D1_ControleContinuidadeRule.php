@@ -14,7 +14,7 @@ use RuntimeException;
 
 final class D1_ControleContinuidadeRule implements MscRuleResultInterface, MscStatefulRuleInterface
 {
-    private const CODE_INCONSISTENCIA = 'D1_MOVIMENTACAO_INCONSISTENTE_CONTROLE';
+    private const CODE_INCONSISTENCIA = 'D1_SALDO_INICIAL_INCONSISTENTE_CONTROLE';
 
     private const TIPO_SALDO_INICIAL = 'beginning_balance';
 

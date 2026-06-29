@@ -14,7 +14,7 @@ use RuntimeException;
 
 final class D1_PatrimonialContinuidadeRule implements MscRuleResultInterface, MscStatefulRuleInterface
 {
-    private const CODE_INCONSISTENCIA = 'D1_MOVIMENTACAO_INCONSISTENTE_PATRIMONIAL';
+    private const CODE_INCONSISTENCIA = 'D1_SALDO_INICIAL_INCONSISTENTE_PATRIMONIAL';
 
     private const CODE_NOVA_COMBINACAO = 'D1_PATRIMONIAL_NOVA_COMBINACAO';
 

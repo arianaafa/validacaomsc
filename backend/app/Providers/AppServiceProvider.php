@@ -23,7 +23,7 @@ use App\Services\Msc\Rules\D1_00031Rule;
 use App\Services\Msc\Rules\D1_00032Rule;
 use App\Services\Msc\Rules\D1_00033Rule;
 use App\Services\Msc\Rules\D1_00044Rule;
-use App\Services\Msc\Rules\D1_ContinuidadeSaldoRule;
+// use App\Services\Msc\Rules\D1_ContinuidadeSaldoRule; // Desativado: coberto pela D1_00018 (agrupamento PCASP 01–09).
 use App\Services\Msc\Rules\D1_ControleContinuidadeRule;
 use App\Services\Msc\Rules\D1_OrcamentariaContinuidadeRule;
 use App\Services\Msc\Rules\D1_PatrimonialContinuidadeRule;
@@ -50,7 +50,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(D1_00036Rule::class, static fn (): D1_00036Rule => new D1_00036Rule());
 
-        $this->app->singleton(D1_ContinuidadeSaldoRule::class, static fn (): D1_ContinuidadeSaldoRule => new D1_ContinuidadeSaldoRule());
+        // $this->app->singleton(D1_ContinuidadeSaldoRule::class, static fn (): D1_ContinuidadeSaldoRule => new D1_ContinuidadeSaldoRule());
 
         $this->app->singleton(D1_PatrimonialContinuidadeRule::class, static function ($app): D1_PatrimonialContinuidadeRule {
             return new D1_PatrimonialContinuidadeRule(
@@ -92,7 +92,7 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(D1_PatrimonialContinuidadeRule::class),
                 $app->make(D1_OrcamentariaContinuidadeRule::class),
                 $app->make(D1_ControleContinuidadeRule::class),
-                $app->make(D1_ContinuidadeSaldoRule::class),
+                // $app->make(D1_ContinuidadeSaldoRule::class), // Desativado: duplicava D1_00018 nas classes 7 e 8.
             ]);
         });
     }
