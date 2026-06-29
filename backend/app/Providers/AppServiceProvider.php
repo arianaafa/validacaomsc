@@ -9,6 +9,9 @@ use App\Services\Msc\MscLineValidator;
 use App\Services\Msc\Rules\D1_00017Rule;
 use App\Services\Msc\Rules\D1_00018Rule;
 use App\Services\Msc\Rules\D1_00021Rule;
+use App\Services\Msc\Rules\D1_00034Rule;
+use App\Services\Msc\Rules\D1_00035Rule;
+use App\Services\Msc\Rules\D1_00036Rule;
 use App\Services\Msc\Rules\D1_00025Rule;
 use App\Services\Msc\Rules\D1_00026Rule;
 use App\Services\Msc\Rules\D1_00027Rule;
@@ -16,6 +19,8 @@ use App\Services\Msc\Rules\D1_00028Rule;
 use App\Services\Msc\Rules\D1_00029Rule;
 use App\Services\Msc\Rules\D1_00030Rule;
 use App\Services\Msc\Rules\D1_00031Rule;
+use App\Services\Msc\Rules\D1_00032Rule;
+use App\Services\Msc\Rules\D1_00033Rule;
 use App\Services\Msc\Rules\D1_ContinuidadeSaldoRule;
 use App\Services\Msc\Rules\D1_ControleContinuidadeRule;
 use App\Services\Msc\Rules\D1_OrcamentariaContinuidadeRule;
@@ -34,6 +39,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(D1_00018Rule::class, static fn (): D1_00018Rule => new D1_00018Rule());
 
         $this->app->singleton(D1_00028Rule::class, static fn (): D1_00028Rule => new D1_00028Rule());
+
+        $this->app->singleton(D1_00034Rule::class, static fn (): D1_00034Rule => new D1_00034Rule());
+
+        $this->app->singleton(D1_00035Rule::class, static fn (): D1_00035Rule => new D1_00035Rule());
+
+        $this->app->singleton(D1_00036Rule::class, static fn (): D1_00036Rule => new D1_00036Rule());
 
         $this->app->singleton(D1_ContinuidadeSaldoRule::class, static fn (): D1_ContinuidadeSaldoRule => new D1_ContinuidadeSaldoRule());
 
@@ -59,12 +70,17 @@ class AppServiceProvider extends ServiceProvider
             return new MscLineValidator([
                 new D1_00017Rule(),
                 new D1_00021Rule(),
+                $app->make(D1_00034Rule::class),
+                $app->make(D1_00035Rule::class),
+                $app->make(D1_00036Rule::class),
                 new D1_00025Rule(),
                 new D1_00026Rule(),
                 new D1_00027Rule(),
                 new D1_00029Rule(),
                 new D1_00030Rule(),
                 new D1_00031Rule(),
+                new D1_00032Rule(),
+                new D1_00033Rule(),
                 $app->make(D1_00028Rule::class),
                 $app->make(D1_00018Rule::class),
                 $app->make(D1_PatrimonialContinuidadeRule::class),
