@@ -253,10 +253,10 @@ onMounted((): void => {
       </div>
 
       <div v-else class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-slate-100 text-sm">
+        <table class="min-w-full table-fixed divide-y divide-slate-100 text-sm">
           <thead class="bg-slate-50/80">
             <tr>
-              <th class="whitespace-nowrap px-5 py-3 text-left font-semibold text-slate-600">
+              <th class="w-[200px] px-5 py-3 text-left font-semibold text-slate-600">
                 Código
               </th>
               <th class="whitespace-nowrap px-5 py-3 text-left font-semibold text-slate-600">
@@ -282,11 +282,11 @@ onMounted((): void => {
               :key="rule.id"
               class="align-top transition-colors hover:bg-slate-50/60"
             >
-              <td class="whitespace-nowrap px-5 py-4">
+              <td class="w-[200px] px-5 py-4 align-top">
                 <div class="font-mono text-xs font-semibold text-indigo-700">
                   {{ rule.code }}
                 </div>
-                <div class="mt-1 max-w-[160px] text-xs font-medium text-slate-700">
+                <div class="mt-1 break-words text-xs font-medium leading-snug text-slate-700">
                   {{ rule.name }}
                 </div>
               </td>
