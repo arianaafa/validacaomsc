@@ -15,6 +15,7 @@ use App\Services\Msc\Rules\D1_00027Rule;
 use App\Services\Msc\Rules\D1_00028Rule;
 use App\Services\Msc\Rules\D1_00029Rule;
 use App\Services\Msc\Rules\D1_00030Rule;
+use App\Services\Msc\Rules\D1_00031Rule;
 use App\Services\Msc\Rules\D1_ContinuidadeSaldoRule;
 use App\Services\Msc\Rules\D1_ControleContinuidadeRule;
 use App\Services\Msc\Rules\D1_OrcamentariaContinuidadeRule;
@@ -63,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
                 new D1_00027Rule(),
                 new D1_00029Rule(),
                 new D1_00030Rule(),
+                new D1_00031Rule(),
                 $app->make(D1_00028Rule::class),
                 $app->make(D1_00018Rule::class),
                 $app->make(D1_PatrimonialContinuidadeRule::class),
