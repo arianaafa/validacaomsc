@@ -58,6 +58,16 @@ const canSubmit = computed(
     !isSubmitting.value,
 )
 
+const validationEnvironmentLabel = computed((): string | null => {
+  const municipality = auth.user?.municipality
+
+  if (!municipality?.name) {
+    return null
+  }
+
+  return municipality.name
+})
+
 function isAllowedImportFile(file: File): boolean {
   const lowerName = file.name.toLowerCase()
 
@@ -225,6 +235,13 @@ async function handleSubmit(): Promise<void> {
       <h1 class="text-3xl font-bold text-slate-900">Importar Planilha</h1>
       <p class="mt-2 text-slate-500">
         Envie o arquivo CSV ou ZIP (exportação SICONFI) da Matriz de Saldos Contábeis para validação estrutural.
+      </p>
+      <p
+        v-if="validationEnvironmentLabel"
+        class="mt-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600"
+      >
+        Ambiente de validação:
+        <span class="ml-1 font-semibold text-slate-800">{{ validationEnvironmentLabel }}</span>
       </p>
     </header>
 

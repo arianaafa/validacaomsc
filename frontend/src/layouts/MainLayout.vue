@@ -16,6 +16,8 @@ const pageTitle = computed(() => {
   return typeof title === 'string' ? title : 'validaMSC'
 })
 
+const municipalityLabel = computed((): string | null => auth.user?.municipality?.name ?? null)
+
 const sidebarWidthClass = computed(() =>
   isSidebarCollapsed.value ? 'w-16' : 'w-64',
 )
@@ -228,10 +230,38 @@ function toggleSidebarCollapse(): void {
       <div class="shrink-0 border-t border-zinc-800/80 p-3">
         <div
           v-if="!isSidebarCollapsed"
-          class="mb-2 truncate px-2 text-sm font-medium text-zinc-300"
+          class="mb-1 truncate px-2 text-sm font-medium text-zinc-300"
           :title="auth.user?.name"
         >
           {{ auth.user?.name ?? 'Usuário' }}
+        </div>
+        <div
+          v-if="municipalityLabel"
+          :class="isSidebarCollapsed ? 'mb-2 flex justify-center' : 'mb-2 px-2'"
+          :title="municipalityLabel"
+        >
+          <svg
+            v-if="isSidebarCollapsed"
+            class="h-4 w-4 shrink-0 text-zinc-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 21h18" />
+            <path d="M5 21V7l8-4v18" />
+            <path d="M19 21V11l-6-4" />
+            <path d="M9 9v0" />
+            <path d="M9 12v0" />
+            <path d="M9 15v0" />
+            <path d="M9 18v0" />
+          </svg>
+          <p v-else class="truncate text-xs text-zinc-500">
+            {{ municipalityLabel }}
+          </p>
         </div>
         <button
           type="button"

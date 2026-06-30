@@ -37,6 +37,8 @@ final class MscValidationService
 
     private const CODIGO_REGRA_FALHA_PROCESSAMENTO = 'FALHA_PROCESSAMENTO';
 
+    private const CODIGO_REGRA_MUNICIPIO_DIVERGENTE = 'MUNICIPIO_DIVERGENTE';
+
     private const COLUMN_CONTA = 0;
 
     private const COLUMN_VALOR = 13;
@@ -120,13 +122,25 @@ final class MscValidationService
         );
 
         try {
-            $ibgeCode = $this->extractIbgeCodeFromCsvPath($csvPath);
+            $user->loadMissing('municipality');
 
-            $upload = DB::transaction(function () use ($user, $file, $periodo, $tipoMsc, $hash, $ibgeCode): MscUpload {
-                $existingUpload = $this->findExistingUpload($user, $periodo, $tipoMsc, $ibgeCode);
+            $userIbgeCode = $user->municipality?->ibge_code;
+
+            if ($userIbgeCode === null || $userIbgeCode === '') {
+                throw ValidationException::withMessages([
+                    'file' => ['Sua conta não está vinculada a um município. Entre em contato com o suporte.'],
+                ]);
+            }
+
+            $spreadsheetIbgeCode = $this->extractIbgeCodeFromCsvPath($csvPath);
+
+            $this->assertSpreadsheetMatchesUserMunicipality($user, $spreadsheetIbgeCode);
+
+            $upload = DB::transaction(function () use ($user, $file, $periodo, $tipoMsc, $hash, $userIbgeCode): MscUpload {
+                $existingUpload = $this->findExistingUpload($user, $periodo, $tipoMsc, $userIbgeCode);
 
                 if ($existingUpload !== null) {
-                    $this->handleExistingUpload($existingUpload, $ibgeCode);
+                    $this->handleExistingUpload($existingUpload, $userIbgeCode);
                 }
 
                 return MscUpload::query()->create([
@@ -136,7 +150,7 @@ final class MscValidationService
                     'status' => MscUploadStatus::Processando,
                     'periodo' => $periodo,
                     'tipo_msc' => $tipoMsc,
-                    'ibge_code' => $ibgeCode,
+                    'ibge_code' => $userIbgeCode,
                 ]);
             });
 
@@ -390,7 +404,7 @@ final class MscValidationService
                 return;
             }
 
-            $idEnte = $this->persistIbgeCode($upload, $firstRow);
+            $idEnte = $this->extractIdEnteFromCodigo($this->extractSiconfiCode($firstRow) ?? '');
 
             if ($idEnte === null) {
                 $this->recordValidationError(
@@ -398,6 +412,22 @@ final class MscValidationService
                     1,
                     self::CODIGO_REGRA_ESTRUTURA_SICONFI,
                     'Não foi possível extrair o código IBGE do ente na primeira linha do arquivo.',
+                );
+                $this->markUploadAsValidationError($upload);
+
+                return;
+            }
+
+            if ($idEnte !== $upload->ibge_code) {
+                $this->recordValidationError(
+                    $upload,
+                    1,
+                    self::CODIGO_REGRA_MUNICIPIO_DIVERGENTE,
+                    sprintf(
+                        'O arquivo não pertence ao município cadastrado. O código IBGE da planilha (%s) difere do município vinculado à sua conta (IBGE %s).',
+                        $idEnte,
+                        $upload->ibge_code,
+                    ),
                 );
                 $this->markUploadAsValidationError($upload);
 
@@ -968,22 +998,32 @@ final class MscValidationService
         }
     }
 
-    /**
-     * @param  list<string|null>  $firstRow
-     */
-    private function persistIbgeCode(MscUpload $upload, array $firstRow): ?string
+    private function assertSpreadsheetMatchesUserMunicipality(User $user, ?string $spreadsheetIbgeCode): void
     {
-        $idEnte = $this->extractIdEnteFromCodigo($this->extractSiconfiCode($firstRow) ?? '');
-
-        if ($idEnte === null) {
-            return null;
+        if ($spreadsheetIbgeCode === null || $spreadsheetIbgeCode === '') {
+            return;
         }
 
-        if ($upload->ibge_code !== $idEnte) {
-            $upload->update(['ibge_code' => $idEnte]);
+        $userIbgeCode = $user->municipality?->ibge_code;
+
+        if ($userIbgeCode === null || $userIbgeCode === '') {
+            return;
         }
 
-        return $idEnte;
+        if ($spreadsheetIbgeCode === $userIbgeCode) {
+            return;
+        }
+
+        $municipalityName = $user->municipality->name ?? 'município cadastrado';
+
+        throw ValidationException::withMessages([
+            'file' => [sprintf(
+                'O arquivo não pertence ao município cadastrado (%s). O código IBGE da planilha (%s) difere do município vinculado à sua conta (IBGE %s).',
+                $municipalityName,
+                $spreadsheetIbgeCode,
+                $userIbgeCode,
+            )],
+        ]);
     }
 
     private function extractIdEnteFromCodigo(string $codigoSiconfi): ?string

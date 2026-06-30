@@ -89,11 +89,14 @@ final class AuthService
      *     is_superadmin: bool,
      *     force_password_change: bool,
      *     municipality_id: int|null,
+     *     municipality: array{id: int, name: string, ibge_code: string}|null,
      *     is_active: bool
      * }
      */
     public function formatUser(User $user): array
     {
+        $user->loadMissing('municipality');
+
         return [
             'id' => $user->id,
             'name' => $user->name,
@@ -101,6 +104,11 @@ final class AuthService
             'is_superadmin' => $user->isSuperAdmin(),
             'force_password_change' => $user->force_password_change,
             'municipality_id' => $user->municipality_id,
+            'municipality' => $user->municipality !== null ? [
+                'id' => $user->municipality->id,
+                'name' => $user->municipality->name,
+                'ibge_code' => $user->municipality->ibge_code,
+            ] : null,
             'is_active' => $user->isActive(),
         ];
     }
@@ -113,6 +121,7 @@ final class AuthService
      *     is_superadmin: bool,
      *     force_password_change: bool,
      *     municipality_id: int|null,
+     *     municipality: array{id: int, name: string, ibge_code: string}|null,
      *     is_active: bool
      * }}
      */

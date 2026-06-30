@@ -1,3 +1,9 @@
+export interface AuthMunicipality {
+  id: number
+  name: string
+  ibge_code: string
+}
+
 export interface AuthUser {
   id: number
   name: string
@@ -5,6 +11,7 @@ export interface AuthUser {
   is_superadmin: boolean
   force_password_change: boolean
   municipality_id: number | null
+  municipality: AuthMunicipality | null
   is_active: boolean
 }
 

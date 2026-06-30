@@ -57,6 +57,10 @@ const accountStatus = computed((): { label: string; badgeClass: string } => {
   }
 })
 
+const municipalityName = computed((): string | null => auth.user?.municipality?.name ?? null)
+
+const municipalityIbgeCode = computed((): string | null => auth.user?.municipality?.ibge_code ?? null)
+
 function inputStateClass(hasError: boolean): string {
   if (hasError) {
     return `${inputClass} border-red-500 focus:border-red-500 focus:ring-red-200`
@@ -137,6 +141,13 @@ async function handleSubmit(): Promise<void> {
               <p class="truncate text-sm text-slate-500">
                 {{ auth.user?.email }}
               </p>
+              <p
+                v-if="municipalityName"
+                class="mt-1 truncate text-sm text-slate-500"
+              >
+                Ambiente de validação:
+                <span class="font-medium text-slate-700">{{ municipalityName }}</span>
+              </p>
             </div>
           </div>
 
@@ -156,6 +167,20 @@ async function handleSubmit(): Promise<void> {
           <div class="rounded-lg border border-slate-200/80 bg-white/80 px-4 py-3">
             <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">E-mail</dt>
             <dd class="mt-1 break-all text-sm font-medium text-slate-900">{{ auth.user.email }}</dd>
+          </div>
+          <div
+            v-if="municipalityName"
+            class="rounded-lg border border-slate-200/80 bg-white/80 px-4 py-3"
+          >
+            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Município</dt>
+            <dd class="mt-1 text-sm font-medium text-slate-900">{{ municipalityName }}</dd>
+          </div>
+          <div
+            v-if="municipalityIbgeCode"
+            class="rounded-lg border border-slate-200/80 bg-white/80 px-4 py-3"
+          >
+            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Código IBGE</dt>
+            <dd class="mt-1 text-sm font-medium tabular-nums text-slate-900">{{ municipalityIbgeCode }}</dd>
           </div>
         </dl>
       </section>
