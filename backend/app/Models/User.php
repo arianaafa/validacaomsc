@@ -27,6 +27,7 @@ final class User extends Authenticatable
         'municipality_id',
         'is_superadmin',
         'force_password_change',
+        'is_active',
     ];
 
     /**
@@ -47,12 +48,18 @@ final class User extends Authenticatable
             'password' => 'hashed',
             'is_superadmin' => 'boolean',
             'force_password_change' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
     public function isSuperAdmin(): bool
     {
         return $this->is_superadmin;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->is_active;
     }
 
     /**

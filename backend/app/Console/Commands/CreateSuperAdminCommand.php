@@ -69,6 +69,7 @@ final class CreateSuperAdminCommand extends Command
             'municipality_id' => null,
             'is_superadmin' => true,
             'force_password_change' => false,
+            'is_active' => true,
         ]);
 
         $this->info("SuperAdmin \"{$validated['name']}\" ({$validated['email']}) criado com sucesso.");

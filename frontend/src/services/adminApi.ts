@@ -1,5 +1,5 @@
 import { apiRequest } from '@/services/httpClient'
-import type { AdminUser, PendingInvoice, ResetPasswordResult } from '@/types/admin'
+import type { AdminUser, PendingInvoice, ResetPasswordResult, UpdateUserStatusResult } from '@/types/admin'
 
 export async function fetchPendingInvoices(token: string): Promise<PendingInvoice[]> {
   const payload = await apiRequest<{ invoices: PendingInvoice[] }>('/admin/invoices/pending', {
@@ -28,5 +28,17 @@ export async function resetUserPassword(
     method: 'POST',
     token,
     body: password ? { password } : {},
+  })
+}
+
+export async function updateUserStatus(
+  userId: number,
+  isActive: boolean,
+  token: string,
+): Promise<UpdateUserStatusResult> {
+  return apiRequest<UpdateUserStatusResult>(`/admin/users/${userId}/status`, {
+    method: 'PATCH',
+    token,
+    body: { is_active: isActive },
   })
 }

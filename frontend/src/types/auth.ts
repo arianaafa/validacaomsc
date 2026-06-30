@@ -5,6 +5,7 @@ export interface AuthUser {
   is_superadmin: boolean
   force_password_change: boolean
   municipality_id: number | null
+  is_active: boolean
 }
 
 export interface AuthTokenPayload {

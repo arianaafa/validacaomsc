@@ -45,6 +45,20 @@ final class LoginTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 
+    public function test_login_fails_when_account_is_inactive(): void
+    {
+        $user = User::factory()->inactive()->create();
+
+        $response = $this->postJson('/api/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email']);
+    }
+
     public function test_login_requires_valid_payload(): void
     {
         $response = $this->postJson('/api/login', []);

@@ -22,6 +22,12 @@ const router = createRouter({
           meta: { title: 'Faturas Pendentes' },
         },
         {
+          path: 'users',
+          name: 'admin-users',
+          component: () => import('../views/Admin/Users.vue'),
+          meta: { title: 'Usuários' },
+        },
+        {
           path: 'users/reset-password',
           name: 'admin-reset-password',
           component: () => import('../views/Admin/ResetPassword.vue'),
@@ -98,11 +104,26 @@ function defaultAuthenticatedPath(isSuperAdmin: boolean): string {
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  if (auth.accessToken && (!auth.user || typeof auth.user.is_superadmin !== 'boolean')) {
+  if (
+    auth.accessToken
+    && (
+      !auth.user
+      || typeof auth.user.is_superadmin !== 'boolean'
+      || typeof auth.user.is_active !== 'boolean'
+    )
+  ) {
     await auth.bootstrap()
   }
 
   if (to.matched.some((record) => record.meta.requiresAuth) && !auth.isAuthenticated) {
+    return {
+      name: 'login',
+      query: { redirect: to.fullPath },
+    }
+  }
+
+  if (to.matched.some((record) => record.meta.requiresAuth) && auth.isAuthenticated && auth.user?.is_active === false) {
+    await auth.logout()
     return {
       name: 'login',
       query: { redirect: to.fullPath },

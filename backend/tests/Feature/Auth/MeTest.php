@@ -23,7 +23,8 @@ final class MeTest extends TestCase
         $response
             ->assertOk()
             ->assertJsonPath('user.id', $user->id)
-            ->assertJsonPath('user.email', $user->email);
+            ->assertJsonPath('user.email', $user->email)
+            ->assertJsonPath('user.is_active', true);
     }
 
     public function test_me_requires_authentication(): void

@@ -14,6 +14,7 @@ export interface AdminUser {
   email: string
   municipality_id: number | null
   force_password_change: boolean
+  is_active: boolean
 }
 
 export interface ResetPasswordResult {
@@ -25,4 +26,9 @@ export interface ResetPasswordResult {
   }
   temporary_password: string | null
   force_password_change: boolean
+}
+
+export interface UpdateUserStatusResult {
+  message: string
+  user: AdminUser
 }

@@ -11,6 +11,7 @@ const errorMessage = ref<string | null>(null)
 const pendingCount = ref(0)
 const pendingTotal = ref(0)
 const usersCount = ref(0)
+const inactiveUsersCount = ref(0)
 const usersPendingPasswordChange = ref(0)
 
 const formattedTotal = computed((): string =>
@@ -38,6 +39,7 @@ async function loadOverview(): Promise<void> {
     pendingCount.value = invoices.length
     pendingTotal.value = invoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0)
     usersCount.value = users.length
+    inactiveUsersCount.value = users.filter((user) => !user.is_active).length
     usersPendingPasswordChange.value = users.filter((user) => user.force_password_change).length
   } catch {
     errorMessage.value = 'Não foi possível carregar os dados administrativos.'
@@ -91,7 +93,9 @@ onMounted(() => {
       <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <p class="text-sm font-medium text-slate-500">Usuários municipais</p>
         <p class="mt-2 text-3xl font-semibold text-slate-900">{{ usersCount }}</p>
-        <p class="mt-1 text-sm text-slate-500">Cadastrados na plataforma</p>
+        <p class="mt-1 text-sm text-slate-500">
+          {{ inactiveUsersCount }} inativo{{ inactiveUsersCount === 1 ? '' : 's' }}
+        </p>
       </article>
 
       <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -101,7 +105,7 @@ onMounted(() => {
       </article>
     </div>
 
-    <div class="grid gap-4 md:grid-cols-2">
+    <div class="grid gap-4 md:grid-cols-3">
       <RouterLink
         to="/admin/invoices"
         class="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md"
@@ -111,6 +115,18 @@ onMounted(() => {
         </h3>
         <p class="mt-1 text-sm text-slate-500">
           Visualize cobranças em aberto de todos os municípios, ordenadas por vencimento.
+        </p>
+      </RouterLink>
+
+      <RouterLink
+        to="/admin/users"
+        class="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md"
+      >
+        <h3 class="font-semibold text-slate-900 group-hover:text-amber-800">
+          Gerenciar usuários
+        </h3>
+        <p class="mt-1 text-sm text-slate-500">
+          Ative ou desative contas municipais e controle o acesso à plataforma.
         </p>
       </RouterLink>
 

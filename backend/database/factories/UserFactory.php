@@ -32,6 +32,7 @@ class UserFactory extends Factory
             'municipality_id' => null,
             'is_superadmin' => false,
             'force_password_change' => false,
+            'is_active' => true,
             'remember_token' => Str::random(10),
         ];
     }
@@ -52,6 +53,14 @@ class UserFactory extends Factory
             'municipality_id' => null,
             'is_superadmin' => true,
             'force_password_change' => false,
+            'is_active' => true,
+        ]);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
         ]);
     }
 }

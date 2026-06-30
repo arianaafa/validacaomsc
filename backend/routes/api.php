@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\Admin\UpdateUserStatusController;
 use App\Http\Controllers\Api\Admin\ListUsersController;
 use App\Http\Controllers\Api\Admin\PendingInvoicesController;
 use App\Http\Controllers\Api\Admin\ResetUserPasswordController;
@@ -26,7 +27,7 @@ Route::get('/health', function () {
 Route::post('/login', LoginController::class);
 Route::post('/v1/lead-requests', [LeadController::class, 'store']);
 
-Route::middleware('auth:sanctum')->group(function (): void {
+Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     Route::get('/me', MeController::class);
     Route::post('/password', ChangePasswordController::class);
     Route::post('/logout', LogoutController::class);
@@ -40,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::middleware('superadmin')->prefix('admin')->group(function (): void {
         Route::get('/users', ListUsersController::class);
+        Route::patch('/users/{user}/status', UpdateUserStatusController::class);
         Route::get('/invoices/pending', PendingInvoicesController::class);
         Route::post('/users/{user}/reset-password', ResetUserPasswordController::class);
     });

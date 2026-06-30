@@ -16,7 +16,8 @@ final class AdminUserService
      *     name: string,
      *     email: string,
      *     municipality_id: int|null,
-     *     force_password_change: bool
+     *     force_password_change: bool,
+     *     is_active: bool
      * }>
      */
     public function listUsers(): array
@@ -31,8 +32,45 @@ final class AdminUserService
                 'email' => $user->email,
                 'municipality_id' => $user->municipality_id,
                 'force_password_change' => $user->force_password_change,
+                'is_active' => $user->isActive(),
             ])
             ->all();
+    }
+
+    /**
+     * @return array{
+     *     id: int,
+     *     name: string,
+     *     email: string,
+     *     municipality_id: int|null,
+     *     force_password_change: bool,
+     *     is_active: bool
+     * }
+     */
+    public function updateActiveStatus(User $targetUser, bool $isActive): array
+    {
+        if ($targetUser->isSuperAdmin()) {
+            throw ValidationException::withMessages([
+                'user_id' => ['Não é permitido alterar o status de um SuperAdmin.'],
+            ]);
+        }
+
+        $targetUser->update(['is_active' => $isActive]);
+
+        if (! $isActive) {
+            $targetUser->tokens()->delete();
+        }
+
+        $targetUser->refresh();
+
+        return [
+            'id' => $targetUser->id,
+            'name' => $targetUser->name,
+            'email' => $targetUser->email,
+            'municipality_id' => $targetUser->municipality_id,
+            'force_password_change' => $targetUser->force_password_change,
+            'is_active' => $targetUser->isActive(),
+        ];
     }
 
     /**

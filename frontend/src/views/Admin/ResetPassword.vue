@@ -145,7 +145,7 @@ onMounted(() => {
               :key="user.id"
               :value="String(user.id)"
             >
-              {{ user.name }} — {{ user.email }}
+              {{ user.name }} — {{ user.email }}{{ user.is_active ? '' : ' (inativo)' }}
             </option>
           </select>
 

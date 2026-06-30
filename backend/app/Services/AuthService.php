@@ -35,6 +35,14 @@ final class AuthService
         /** @var User $user */
         $user = $this->auth->user();
 
+        if (! $user->isActive()) {
+            $this->auth->logout();
+
+            throw ValidationException::withMessages([
+                'email' => [__('auth.inactive')],
+            ]);
+        }
+
         return $this->issueTokenResponse($user);
     }
 
@@ -80,7 +88,8 @@ final class AuthService
      *     email: string,
      *     is_superadmin: bool,
      *     force_password_change: bool,
-     *     municipality_id: int|null
+     *     municipality_id: int|null,
+     *     is_active: bool
      * }
      */
     public function formatUser(User $user): array
@@ -92,6 +101,7 @@ final class AuthService
             'is_superadmin' => $user->isSuperAdmin(),
             'force_password_change' => $user->force_password_change,
             'municipality_id' => $user->municipality_id,
+            'is_active' => $user->isActive(),
         ];
     }
 
@@ -102,7 +112,8 @@ final class AuthService
      *     email: string,
      *     is_superadmin: bool,
      *     force_password_change: bool,
-     *     municipality_id: int|null
+     *     municipality_id: int|null,
+     *     is_active: bool
      * }}
      */
     public function changePassword(User $user, string $newPassword): array
@@ -147,6 +158,12 @@ final class AuthService
      */
     private function issueTokenResponse(User $user): array
     {
+        if (! $user->isActive()) {
+            throw ValidationException::withMessages([
+                'email' => [__('auth.inactive')],
+            ]);
+        }
+
         $token = $user->createToken(
             self::TOKEN_NAME,
             ['*'],
