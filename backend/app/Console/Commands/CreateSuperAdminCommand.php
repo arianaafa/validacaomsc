@@ -23,10 +23,20 @@ final class CreateSuperAdminCommand extends Command
 
     public function handle(): int
     {
-        $name = $this->ask('Nome');
-        $email = $this->ask('E-mail');
-        $password = $this->secret('Senha');
-        $passwordConfirmation = $this->secret('Confirme a senha');
+        $passwordFromEnv = filled(env('AURA_SUPERADMIN_PASSWORD'));
+
+        $name = $this->resolveName();
+        $email = $this->resolveEmail();
+        $password = $this->resolvePassword($passwordFromEnv);
+        $passwordConfirmation = $passwordFromEnv
+            ? $password
+            : $this->secret('Confirme a senha');
+
+        $passwordRules = ['required', 'string', Password::min(8)];
+
+        if (! $passwordFromEnv) {
+            $passwordRules[] = 'confirmed';
+        }
 
         $validator = Validator::make(
             [
@@ -38,7 +48,7 @@ final class CreateSuperAdminCommand extends Command
             [
                 'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-                'password' => ['required', 'string', Password::min(8), 'confirmed'],
+                'password' => $passwordRules,
             ],
         );
 
@@ -64,5 +74,36 @@ final class CreateSuperAdminCommand extends Command
         $this->info("SuperAdmin \"{$validated['name']}\" ({$validated['email']}) criado com sucesso.");
 
         return self::SUCCESS;
+    }
+
+    private function resolveName(): string
+    {
+        $name = env('AURA_SUPERADMIN_NAME');
+
+        if (filled($name)) {
+            return (string) $name;
+        }
+
+        return (string) $this->ask('Nome');
+    }
+
+    private function resolveEmail(): string
+    {
+        $email = env('AURA_SUPERADMIN_EMAIL');
+
+        if (filled($email)) {
+            return (string) $email;
+        }
+
+        return (string) $this->ask('E-mail');
+    }
+
+    private function resolvePassword(bool $passwordFromEnv): string
+    {
+        if ($passwordFromEnv) {
+            return (string) env('AURA_SUPERADMIN_PASSWORD');
+        }
+
+        return (string) $this->secret('Senha');
     }
 }
