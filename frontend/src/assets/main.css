@@ -1,21 +1,15 @@
 @import 'tailwindcss';
 @import './base.css';
 
+@theme {
+  --color-aura-navy: #004080;
+  --color-aura-navy-dark: #00325f;
+  --color-aura-blue: #008cc4;
+  --color-aura-cyan: #00c8e6;
+}
+
 #app {
   width: 100%;
   min-height: 100vh;
   font-weight: normal;
-}
-
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
 }
