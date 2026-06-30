@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\Admin\ListUsersController;
 use App\Http\Controllers\Api\Admin\PendingInvoicesController;
 use App\Http\Controllers\Api\Admin\ResetUserPasswordController;
+use App\Http\Controllers\Api\Auth\ChangePasswordController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\MeController;
@@ -27,6 +28,7 @@ Route::post('/v1/lead-requests', [LeadController::class, 'store']);
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/me', MeController::class);
+    Route::post('/password', ChangePasswordController::class);
     Route::post('/logout', LogoutController::class);
     Route::post('/refresh', RefreshTokenController::class);
 

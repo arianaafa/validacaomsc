@@ -66,6 +66,18 @@ export const useAuthStore = defineStore('auth', () => {
     })
   }
 
+  function updateUser(updatedUser: AuthUser): void {
+    user.value = updatedUser
+
+    if (accessToken.value) {
+      persistState({
+        user: updatedUser,
+        accessToken: accessToken.value,
+        expiresAt: expiresAt.value,
+      })
+    }
+  }
+
   function clearSession(): void {
     user.value = null
     accessToken.value = null
@@ -198,5 +210,6 @@ export const useAuthStore = defineStore('auth', () => {
     refresh,
     bootstrap,
     clearErrors,
+    updateUser,
   }
 })

@@ -95,6 +95,31 @@ final class AuthService
         ];
     }
 
+    /**
+     * @return array{message: string, user: array{
+     *     id: int,
+     *     name: string,
+     *     email: string,
+     *     is_superadmin: bool,
+     *     force_password_change: bool,
+     *     municipality_id: int|null
+     * }}
+     */
+    public function changePassword(User $user, string $newPassword): array
+    {
+        $user->update([
+            'password' => $newPassword,
+            'force_password_change' => false,
+        ]);
+
+        $user->refresh();
+
+        return [
+            'message' => 'Senha alterada com sucesso.',
+            'user' => $this->formatUser($user),
+        ];
+    }
+
     private function revokePersonalAccessToken(User $user, string $plainTextToken): void
     {
         $token = PersonalAccessToken::findToken($plainTextToken);

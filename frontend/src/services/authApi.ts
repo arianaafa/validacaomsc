@@ -1,6 +1,8 @@
 import type {
   AuthTokenPayload,
   AuthUser,
+  ChangePasswordCredentials,
+  ChangePasswordResponse,
   LoginCredentials,
   RegisterCredentials,
 } from '@/types/auth'
@@ -38,5 +40,16 @@ export async function fetchMe(token: string): Promise<{ user: AuthUser }> {
   return apiRequest<{ user: AuthUser }>('/me', {
     method: 'GET',
     token,
+  })
+}
+
+export async function changePassword(
+  credentials: ChangePasswordCredentials,
+  token: string,
+): Promise<ChangePasswordResponse> {
+  return apiRequest<ChangePasswordResponse>('/password', {
+    method: 'POST',
+    token,
+    body: { ...credentials },
   })
 }

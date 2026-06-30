@@ -25,6 +25,17 @@ export interface RegisterCredentials {
   password_confirmation: string
 }
 
+export interface ChangePasswordCredentials {
+  current_password: string
+  password: string
+  password_confirmation: string
+}
+
+export interface ChangePasswordResponse {
+  message: string
+  user: AuthUser
+}
+
 export interface ValidationErrorResponse {
   message: string
   errors: Record<string, string[]>
