@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
-import AuraIcon from '@/components/brand/AuraIcon.vue'
 import AuraLogo from '@/components/brand/AuraLogo.vue'
 import { useAuthStore } from '@/stores/auth'
 
@@ -78,8 +77,18 @@ function toggleSidebarCollapse(): void {
           :class="isSidebarCollapsed ? 'justify-center' : ''"
           @click="closeMobileMenu"
         >
-          <AuraIcon v-if="isSidebarCollapsed" :size="36" />
-          <AuraLogo v-else dark />
+          <AuraLogo
+            v-if="isSidebarCollapsed"
+            dark
+            icon-only
+            :icon-size="36"
+          />
+          <AuraLogo
+            v-else
+            dark
+            layout="vertical"
+            :icon-size="36"
+          />
         </RouterLink>
       </div>
 
