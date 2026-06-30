@@ -43,7 +43,7 @@ async function handleSubmit(): Promise<void> {
 
 <template>
   <div
-    class="flex min-h-screen w-full flex-col items-center justify-center bg-slate-50 px-4 py-[clamp(2rem,6vh,5rem)]"
+    class="flex min-h-screen w-full flex-col items-center justify-center bg-gray-100 px-4 py-[clamp(2rem,6vh,5rem)]"
   >
     <div class="flex w-full max-w-md flex-col items-center gap-6 sm:gap-8 lg:gap-10">
       <header class="flex justify-center" aria-label="Aura Tech">
