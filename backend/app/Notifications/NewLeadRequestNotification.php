@@ -38,6 +38,8 @@ final class NewLeadRequestNotification extends Notification
             ->line('**E-mail:** '.$this->leadRequest->email)
             ->line('**Telefone:** '.$this->leadRequest->phone)
             ->line('**Prefeitura/Órgão:** '.$this->leadRequest->organization_name)
+            ->line('**CNPJ:** '.$this->formatCnpj($this->leadRequest->cnpj))
+            ->line('**Código IBGE:** '.$this->leadRequest->ibge_code)
             ->line('**Cargo:** '.$roleLabel);
 
         if ($this->leadRequest->message !== null && $this->leadRequest->message !== '') {
@@ -55,5 +57,21 @@ final class NewLeadRequestNotification extends Notification
             LeadRequestRole::Auditor => 'Auditor(a)',
             LeadRequestRole::Outros => 'Outros',
         };
+    }
+
+    private function formatCnpj(string $cnpj): string
+    {
+        if (strlen($cnpj) !== 14) {
+            return $cnpj;
+        }
+
+        return sprintf(
+            '%s.%s.%s/%s-%s',
+            substr($cnpj, 0, 2),
+            substr($cnpj, 2, 3),
+            substr($cnpj, 5, 3),
+            substr($cnpj, 8, 4),
+            substr($cnpj, 12, 2),
+        );
     }
 }

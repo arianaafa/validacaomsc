@@ -18,11 +18,23 @@ final class StoreLeadRequest extends FormRequest
 
     private const MAX_ORGANIZATION_LENGTH = 255;
 
+    private const CNPJ_LENGTH = 14;
+
+    private const IBGE_CODE_LENGTH = 7;
+
     private const MAX_MESSAGE_LENGTH = 2000;
 
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'cnpj' => preg_replace('/\D/', '', (string) $this->input('cnpj', '')),
+            'ibge_code' => preg_replace('/\D/', '', (string) $this->input('ibge_code', '')),
+        ]);
     }
 
     /**
@@ -53,6 +65,18 @@ final class StoreLeadRequest extends FormRequest
                 'string',
                 'max:'.self::MAX_ORGANIZATION_LENGTH,
             ],
+            'cnpj' => [
+                'required',
+                'string',
+                'size:'.self::CNPJ_LENGTH,
+                'regex:/^\d{14}$/',
+            ],
+            'ibge_code' => [
+                'required',
+                'string',
+                'size:'.self::IBGE_CODE_LENGTH,
+                'regex:/^\d{7}$/',
+            ],
             'role' => [
                 'required',
                 'string',
@@ -79,6 +103,8 @@ final class StoreLeadRequest extends FormRequest
             'email' => $this->string('email')->trim()->toString(),
             'phone' => $this->string('phone')->trim()->toString(),
             'organization_name' => $this->string('organization_name')->trim()->toString(),
+            'cnpj' => $this->string('cnpj')->toString(),
+            'ibge_code' => $this->string('ibge_code')->toString(),
             'role' => $this->string('role')->toString(),
             'message' => $message !== '' ? $message : null,
         ];

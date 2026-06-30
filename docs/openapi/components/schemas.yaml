@@ -229,7 +229,7 @@ LeadRequestStatus:
 
 StoreLeadRequest:
   type: object
-  required: [name, email, phone, organization_name, role]
+  required: [name, email, phone, organization_name, cnpj, ibge_code, role]
   properties:
     name:
       type: string
@@ -248,6 +248,14 @@ StoreLeadRequest:
       type: string
       maxLength: 255
       example: Prefeitura Municipal de João Pessoa
+    cnpj:
+      type: string
+      pattern: '^\d{14}$'
+      example: '12345678000190'
+    ibge_code:
+      type: string
+      pattern: '^\d{7}$'
+      example: '2507507'
     role:
       $ref: '#/LeadRequestRole'
     message:
@@ -258,7 +266,7 @@ StoreLeadRequest:
 
 LeadRequest:
   type: object
-  required: [id, name, email, phone, organization_name, role, status]
+  required: [id, name, email, phone, organization_name, cnpj, ibge_code, role, status]
   properties:
     id:
       type: string
@@ -272,6 +280,12 @@ LeadRequest:
       type: string
     organization_name:
       type: string
+    cnpj:
+      type: string
+      pattern: '^\d{14}$'
+    ibge_code:
+      type: string
+      pattern: '^\d{7}$'
     role:
       $ref: '#/LeadRequestRole'
     message:

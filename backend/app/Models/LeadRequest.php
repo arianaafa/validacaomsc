@@ -21,6 +21,8 @@ final class LeadRequest extends Model
         'email',
         'phone',
         'organization_name',
+        'cnpj',
+        'ibge_code',
         'role',
         'message',
         'status',

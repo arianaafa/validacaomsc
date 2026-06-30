@@ -5,6 +5,8 @@ export interface LeadRequestPayload {
   email: string
   phone: string
   organization_name: string
+  cnpj: string
+  ibge_code: string
   role: LeadRequestRole
   message?: string
 }
@@ -17,6 +19,8 @@ export interface LeadRequestResponse {
     email: string
     phone: string
     organization_name: string
+    cnpj: string
+    ibge_code: string
     role: LeadRequestRole
     message: string | null
     status: 'pendente' | 'contatado' | 'concluido'

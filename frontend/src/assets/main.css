@@ -6,6 +6,10 @@
   --color-aura-navy-dark: #00325f;
   --color-aura-blue: #008cc4;
   --color-aura-cyan: #00c8e6;
+  --color-aura-primary: #1e40af;
+  --color-aura-sky: #0ea5e9;
+  --color-aura-bg-start: #f8fbff;
+  --color-aura-bg-end: #eef4ff;
 }
 
 #app {
