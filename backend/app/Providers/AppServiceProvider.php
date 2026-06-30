@@ -10,6 +10,8 @@ use App\Services\Msc\Rules\D1_00001Rule;
 use App\Services\Msc\Rules\D1_00002Rule;
 use App\Services\Msc\Rules\D1_00003Rule;
 use App\Services\Msc\Rules\D1_00006Rule;
+use App\Services\Msc\Rules\D2_00001Rule;
+use App\Services\Msc\Rules\D2_00002Rule;
 use App\Services\Msc\Rules\D1_00017Rule;
 use App\Services\Msc\Rules\D1_00018Rule;
 use App\Services\Msc\Rules\D1_00021Rule;
@@ -68,6 +70,18 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(D1_00006Rule::class, static function ($app): D1_00006Rule {
             return new D1_00006Rule(
+                $app->make(SiconfiClient::class),
+            );
+        });
+
+        $this->app->singleton(D2_00001Rule::class, static function ($app): D2_00001Rule {
+            return new D2_00001Rule(
+                $app->make(SiconfiClient::class),
+            );
+        });
+
+        $this->app->singleton(D2_00002Rule::class, static function ($app): D2_00002Rule {
+            return new D2_00002Rule(
                 $app->make(SiconfiClient::class),
             );
         });
@@ -132,6 +146,8 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(D1_00002Rule::class),
                 $app->make(D1_00003Rule::class),
                 $app->make(D1_00006Rule::class),
+                $app->make(D2_00001Rule::class),
+                $app->make(D2_00002Rule::class),
                 $app->make(D1_00018Rule::class),
                 $app->make(D1_PatrimonialContinuidadeRule::class),
                 $app->make(D1_OrcamentariaContinuidadeRule::class),
