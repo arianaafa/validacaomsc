@@ -15,6 +15,10 @@ use App\Services\Msc\Rules\D1_00036Rule;
 use App\Services\Msc\Rules\D1_00037Rule;
 use App\Services\Msc\Rules\D1_00038Rule;
 use App\Services\Msc\Rules\D1_00039Rule;
+use App\Services\Msc\Rules\D1_00040Rule;
+use App\Services\Msc\Rules\D1_00041Rule;
+use App\Services\Msc\Rules\D1_00042Rule;
+use App\Services\Msc\Rules\D1_00043Rule;
 use App\Services\Msc\Rules\D1_00025Rule;
 use App\Services\Msc\Rules\D1_00026Rule;
 use App\Services\Msc\Rules\D1_00027Rule;
@@ -89,6 +93,10 @@ class AppServiceProvider extends ServiceProvider
                 new D1_00033Rule(),
                 new D1_00038Rule(),
                 new D1_00039Rule(),
+                new D1_00040Rule(),
+                new D1_00041Rule(),
+                new D1_00042Rule(),
+                new D1_00043Rule(),
                 new D1_00044Rule(),
                 $app->make(D1_00028Rule::class),
                 $app->make(D1_00037Rule::class),
