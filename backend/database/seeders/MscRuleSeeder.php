@@ -46,6 +46,15 @@ final class MscRuleSeeder extends Seeder
                 'is_implemented' => true,
             ],
             [
+                'code' => 'D1_00002',
+                'name' => 'Homologação da DCA.',
+                'validation_type' => MscRuleValidationType::Global,
+                'target_group' => 'Extrato de Entregas — Declaração de Contas Anuais (DCA)',
+                'objective' => 'Verifica na API do Siconfi se a DCA do exercício está devidamente homologada (status HO), aplicando-se exclusivamente para matrizes com período de encerramento (13).',
+                'error_message' => 'ente federativo possui pendências na homologação da declaração de contas anuais (DCA) no Siconfi.',
+                'is_implemented' => true,
+            ],
+            [
                 'code' => 'D1_00017',
                 'name' => 'Envio de MSCs com valores negativos',
                 'validation_type' => MscRuleValidationType::Linha,
