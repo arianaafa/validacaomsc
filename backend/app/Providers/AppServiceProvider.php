@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Services\Msc\Clients\SiconfiClient;
 use App\Services\Msc\MscLineValidator;
+use App\Services\Msc\Rules\D1_00001Rule;
 use App\Services\Msc\Rules\D1_00017Rule;
 use App\Services\Msc\Rules\D1_00018Rule;
 use App\Services\Msc\Rules\D1_00021Rule;
@@ -43,6 +44,12 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(SiconfiClient::class);
+
+        $this->app->singleton(D1_00001Rule::class, static function ($app): D1_00001Rule {
+            return new D1_00001Rule(
+                $app->make(SiconfiClient::class),
+            );
+        });
 
         $this->app->singleton(D1_00018Rule::class, static fn (): D1_00018Rule => new D1_00018Rule());
 
@@ -100,6 +107,7 @@ class AppServiceProvider extends ServiceProvider
                 new D1_00044Rule(),
                 $app->make(D1_00028Rule::class),
                 $app->make(D1_00037Rule::class),
+                $app->make(D1_00001Rule::class),
                 $app->make(D1_00018Rule::class),
                 $app->make(D1_PatrimonialContinuidadeRule::class),
                 $app->make(D1_OrcamentariaContinuidadeRule::class),

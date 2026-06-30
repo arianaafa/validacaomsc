@@ -37,6 +37,15 @@ final class MscRuleSeeder extends Seeder
     {
         return [
             [
+                'code' => 'D1_00001',
+                'name' => 'Homologação de todos os RREOs.',
+                'validation_type' => MscRuleValidationType::Global,
+                'target_group' => 'Extrato de Entregas — Relatório Resumido de Execução Orçamentária (RREO)',
+                'objective' => 'Verifica na API do Siconfi se todos os RREOs obrigatórios até o mês atual do exercício estão devidamente homologados (status HO).',
+                'error_message' => 'ente federativo possui pendências na homologação de relatórios resumidos de execução orçamentária (RREO) no Siconfi.',
+                'is_implemented' => true,
+            ],
+            [
                 'code' => 'D1_00017',
                 'name' => 'Envio de MSCs com valores negativos',
                 'validation_type' => MscRuleValidationType::Linha,
