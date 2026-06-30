@@ -2,6 +2,9 @@ export interface AuthUser {
   id: number
   name: string
   email: string
+  is_superadmin: boolean
+  force_password_change: boolean
+  municipality_id: number | null
 }
 
 export interface AuthTokenPayload {

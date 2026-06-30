@@ -5,9 +5,34 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/admin',
+      component: () => import('../layouts/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresSuperAdmin: true },
+      children: [
+        {
+          path: '',
+          name: 'admin-overview',
+          component: () => import('../views/Admin/Overview.vue'),
+          meta: { title: 'Administração' },
+        },
+        {
+          path: 'invoices',
+          name: 'admin-invoices',
+          component: () => import('../views/Admin/PendingInvoices.vue'),
+          meta: { title: 'Faturas Pendentes' },
+        },
+        {
+          path: 'users/reset-password',
+          name: 'admin-reset-password',
+          component: () => import('../views/Admin/ResetPassword.vue'),
+          meta: { title: 'Resetar Senha' },
+        },
+      ],
+    },
+    {
       path: '/',
       component: () => import('../layouts/MainLayout.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, municipalOnly: true },
       children: [
         {
           path: '',
@@ -42,6 +67,12 @@ const router = createRouter({
       ],
     },
     {
+      path: '/admin/forbidden',
+      name: 'admin-forbidden',
+      component: () => import('../views/Admin/ForbiddenView.vue'),
+      meta: { requiresAuth: true, title: 'Acesso negado' },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/auth/LoginView.vue'),
@@ -60,10 +91,14 @@ const router = createRouter({
   ],
 })
 
+function defaultAuthenticatedPath(isSuperAdmin: boolean): string {
+  return isSuperAdmin ? '/admin' : '/'
+}
+
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  if (!auth.user && auth.accessToken) {
+  if (auth.accessToken && (!auth.user || typeof auth.user.is_superadmin !== 'boolean')) {
     await auth.bootstrap()
   }
 
@@ -75,7 +110,15 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.guestOnly && auth.isAuthenticated) {
-    return { name: 'home' }
+    return defaultAuthenticatedPath(auth.isSuperAdmin)
+  }
+
+  if (to.matched.some((record) => record.meta.requiresSuperAdmin) && !auth.isSuperAdmin) {
+    return { name: 'admin-forbidden' }
+  }
+
+  if (to.matched.some((record) => record.meta.municipalOnly) && auth.isSuperAdmin) {
+    return '/admin'
   }
 
   return true

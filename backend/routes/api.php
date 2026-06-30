@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\Admin\ListUsersController;
+use App\Http\Controllers\Api\Admin\PendingInvoicesController;
+use App\Http\Controllers\Api\Admin\ResetUserPasswordController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\MeController;
@@ -32,4 +35,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/msc/uploads', [MscUploadController::class, 'store']);
 
     Route::get('/v1/msc-rules', [MscRuleController::class, 'index']);
+
+    Route::middleware('superadmin')->prefix('admin')->group(function (): void {
+        Route::get('/users', ListUsersController::class);
+        Route::get('/invoices/pending', PendingInvoicesController::class);
+        Route::post('/users/{user}/reset-password', ResetUserPasswordController::class);
+    });
 });

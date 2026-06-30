@@ -52,6 +52,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => user.value !== null && accessToken.value !== null)
 
+  const isSuperAdmin = computed(() => user.value?.is_superadmin === true)
+
   function setSession(payload: { user: AuthUser; access_token: string; expires_at: string | null }): void {
     user.value = payload.user
     accessToken.value = payload.access_token
@@ -189,6 +191,7 @@ export const useAuthStore = defineStore('auth', () => {
     error,
     fieldErrors,
     isAuthenticated,
+    isSuperAdmin,
     login,
     register,
     logout,

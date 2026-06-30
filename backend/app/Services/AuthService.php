@@ -74,7 +74,14 @@ final class AuthService
     }
 
     /**
-     * @return array{id: int, name: string, email: string}
+     * @return array{
+     *     id: int,
+     *     name: string,
+     *     email: string,
+     *     is_superadmin: bool,
+     *     force_password_change: bool,
+     *     municipality_id: int|null
+     * }
      */
     public function formatUser(User $user): array
     {
@@ -82,6 +89,9 @@ final class AuthService
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
+            'is_superadmin' => $user->isSuperAdmin(),
+            'force_password_change' => $user->force_password_change,
+            'municipality_id' => $user->municipality_id,
         ];
     }
 

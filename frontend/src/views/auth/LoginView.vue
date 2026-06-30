@@ -36,7 +36,8 @@ async function handleSubmit(): Promise<void> {
     return
   }
 
-  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+  const redirectQuery = typeof route.query.redirect === 'string' ? route.query.redirect : null
+  const redirect = redirectQuery ?? (auth.isSuperAdmin ? '/admin' : '/')
   await router.push(redirect)
 }
 </script>
