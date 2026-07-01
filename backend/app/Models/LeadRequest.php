@@ -7,11 +7,14 @@ namespace App\Models;
 use App\Enums\LeadRequestRole;
 use App\Enums\LeadRequestStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class LeadRequest extends Model
 {
-    use HasUuids;
+    /** @use HasFactory<LeadRequestFactory> */
+    use HasFactory, HasUuids;
 
     /**
      * @var list<string>
@@ -26,6 +29,10 @@ final class LeadRequest extends Model
         'role',
         'message',
         'status',
+        'user_id',
+        'trial_started_at',
+        'trial_expires_at',
+        'approved_at',
     ];
 
     /**
@@ -36,6 +43,17 @@ final class LeadRequest extends Model
         return [
             'role' => LeadRequestRole::class,
             'status' => LeadRequestStatus::class,
+            'trial_started_at' => 'datetime',
+            'trial_expires_at' => 'datetime',
+            'approved_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

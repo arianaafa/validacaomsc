@@ -68,6 +68,25 @@ const validationEnvironmentLabel = computed((): string | null => {
   return municipality.name
 })
 
+const trialNotice = computed((): string | null => {
+  if (auth.user?.is_trial !== true) {
+    return null
+  }
+
+  const expiresAt = auth.user.trial_expires_at
+  const uploadsRemaining = auth.user.trial_uploads_remaining
+
+  const expiryText = expiresAt
+    ? ` até ${new Date(expiresAt).toLocaleString('pt-BR')}`
+    : ''
+
+  const uploadText = uploadsRemaining !== null
+    ? ` Restam ${uploadsRemaining} importação(ões) de teste.`
+    : ''
+
+  return `Conta em período de teste${expiryText}.${uploadText}`
+})
+
 function isAllowedImportFile(file: File): boolean {
   const lowerName = file.name.toLowerCase()
 
@@ -242,6 +261,13 @@ async function handleSubmit(): Promise<void> {
       >
         Ambiente de validação:
         <span class="ml-1 font-semibold text-slate-800">{{ validationEnvironmentLabel }}</span>
+      </p>
+      <p
+        v-if="trialNotice"
+        class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        role="status"
+      >
+        {{ trialNotice }}
       </p>
     </header>
 

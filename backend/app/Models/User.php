@@ -8,6 +8,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -28,6 +29,8 @@ final class User extends Authenticatable
         'is_superadmin',
         'force_password_change',
         'is_active',
+        'is_trial',
+        'trial_expires_at',
     ];
 
     /**
@@ -49,7 +52,29 @@ final class User extends Authenticatable
             'is_superadmin' => 'boolean',
             'force_password_change' => 'boolean',
             'is_active' => 'boolean',
+            'is_trial' => 'boolean',
+            'trial_expires_at' => 'datetime',
         ];
+    }
+
+    public function isTrial(): bool
+    {
+        return $this->is_trial;
+    }
+
+    public function isTrialExpired(): bool
+    {
+        return $this->is_trial
+            && $this->trial_expires_at !== null
+            && $this->trial_expires_at->isPast();
+    }
+
+    /**
+     * @return HasOne<LeadRequest, $this>
+     */
+    public function leadRequest(): HasOne
+    {
+        return $this->hasOne(LeadRequest::class);
     }
 
     public function isSuperAdmin(): bool

@@ -6,7 +6,8 @@ namespace App\Enums;
 
 enum LeadRequestStatus: string
 {
-    case Pendente = 'pendente';
-    case Contatado = 'contatado';
-    case Concluido = 'concluido';
+    case Pending = 'pending';
+    case Trial = 'trial';
+    case Approved = 'approved';
+    case Failed = 'failed';
 }

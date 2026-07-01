@@ -22,6 +22,12 @@ const router = createRouter({
           meta: { title: 'Faturas Pendentes' },
         },
         {
+          path: 'leads',
+          name: 'admin-leads',
+          component: () => import('../views/Admin/Leads.vue'),
+          meta: { title: 'Leads' },
+        },
+        {
           path: 'users',
           name: 'admin-users',
           component: () => import('../views/Admin/Users.vue'),

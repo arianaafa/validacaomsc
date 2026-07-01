@@ -71,6 +71,7 @@ final class MscValidationService
 
     public function __construct(
         private readonly MscLineValidator $lineValidator,
+        private readonly \App\Services\Lead\LeadProvisioningService $leadProvisioningService,
     ) {}
 
     private string $activeCsvDelimiter = self::CSV_DELIMITER;
@@ -123,6 +124,9 @@ final class MscValidationService
 
         try {
             $user->loadMissing('municipality');
+
+            $this->leadProvisioningService->assertUserCanUpload($user);
+            $user->refresh();
 
             $userIbgeCode = $user->municipality?->ibge_code;
 

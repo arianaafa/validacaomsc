@@ -63,4 +63,12 @@ class UserFactory extends Factory
             'is_active' => false,
         ]);
     }
+
+    public function trial(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_trial' => true,
+            'trial_expires_at' => now()->addDay(),
+        ]);
+    }
 }

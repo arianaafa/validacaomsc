@@ -13,6 +13,9 @@ export interface AuthUser {
   municipality_id: number | null
   municipality: AuthMunicipality | null
   is_active: boolean
+  is_trial: boolean
+  trial_expires_at: string | null
+  trial_uploads_remaining: number | null
 }
 
 export interface AuthTokenPayload {

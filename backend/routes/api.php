@@ -2,10 +2,14 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Api\Admin\UpdateUserStatusController;
+use App\Http\Controllers\Api\Admin\ApproveLeadRequestController;
+use App\Http\Controllers\Api\Admin\FailLeadRequestController;
+use App\Http\Controllers\Api\Admin\ListLeadRequestsController;
 use App\Http\Controllers\Api\Admin\ListUsersController;
 use App\Http\Controllers\Api\Admin\PendingInvoicesController;
 use App\Http\Controllers\Api\Admin\ResetUserPasswordController;
+use App\Http\Controllers\Api\Admin\StartLeadTrialController;
+use App\Http\Controllers\Api\Admin\UpdateUserStatusController;
 use App\Http\Controllers\Api\Auth\ChangePasswordController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
@@ -40,6 +44,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     Route::get('/v1/msc-rules', [MscRuleController::class, 'index']);
 
     Route::middleware('superadmin')->prefix('admin')->group(function (): void {
+        Route::get('/lead-requests', ListLeadRequestsController::class);
+        Route::post('/lead-requests/{leadRequest}/start-trial', StartLeadTrialController::class);
+        Route::post('/lead-requests/{leadRequest}/approve', ApproveLeadRequestController::class);
+        Route::post('/lead-requests/{leadRequest}/fail', FailLeadRequestController::class);
         Route::get('/users', ListUsersController::class);
         Route::patch('/users/{user}/status', UpdateUserStatusController::class);
         Route::get('/invoices/pending', PendingInvoicesController::class);

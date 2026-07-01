@@ -1,3 +1,5 @@
+export type LeadRequestStatus = 'pending' | 'trial' | 'approved' | 'failed'
+
 export type LeadRequestRole = 'secretario' | 'contador' | 'auditor' | 'outros'
 
 export interface LeadRequestPayload {
@@ -23,7 +25,11 @@ export interface LeadRequestResponse {
     ibge_code: string
     role: LeadRequestRole
     message: string | null
-    status: 'pendente' | 'contatado' | 'concluido'
+    status: LeadRequestStatus
+    user_id: number | null
+    trial_started_at: string | null
+    trial_expires_at: string | null
+    approved_at: string | null
     created_at: string | null
   }
 }

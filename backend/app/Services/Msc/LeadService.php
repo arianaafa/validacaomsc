@@ -35,7 +35,7 @@ final class LeadService
             'ibge_code' => $data['ibge_code'],
             'role' => LeadRequestRole::from($data['role']),
             'message' => $data['message'],
-            'status' => LeadRequestStatus::Pendente,
+            'status' => LeadRequestStatus::Pending,
         ]);
 
         $this->notifyAdministrator($leadRequest);
@@ -71,6 +71,10 @@ final class LeadService
             'role' => $leadRequest->role->value,
             'message' => $leadRequest->message,
             'status' => $leadRequest->status->value,
+            'user_id' => $leadRequest->user_id,
+            'trial_started_at' => $leadRequest->trial_started_at?->toIso8601String(),
+            'trial_expires_at' => $leadRequest->trial_expires_at?->toIso8601String(),
+            'approved_at' => $leadRequest->approved_at?->toIso8601String(),
             'created_at' => $leadRequest->created_at?->toIso8601String(),
         ];
     }

@@ -93,9 +93,37 @@ AURA_SUPERADMIN_PASSWORD=senha-segura
 
 Acesse o painel administrativo em http://localhost:5173/admin com esse usuário.
 
-### 5. (Opcional) Usuário municipal para testar importação
+### 5. Fluxo de leads (trial → aprovação)
 
-Usuários municipais precisam estar vinculados a um município (`municipality_id`). Para desenvolvimento local, crie um município e um usuário de teste:
+Leads enviados em `/solicitar-demonstracao` ficam com status `pending`. O SuperAdmin provisiona trial em **Admin → Leads** ou via CLI:
+
+```bash
+# Listar UUID do lead (via Admin → Leads ou banco)
+./compose.sh exec backend php artisan aura:lead-start-trial {uuid-do-lead}
+```
+
+O trial:
+- cria o município (`municipalities`) a partir do IBGE/nome do lead;
+- cria o usuário municipal vinculado;
+- permite **1 importação** de planilha;
+- expira em **24 horas** (`LEAD_TRIAL_HOURS`), desativando a conta automaticamente.
+
+Comandos do fluxo:
+
+```bash
+./compose.sh exec backend php artisan aura:lead-start-trial {uuid}   # pending → trial
+./compose.sh exec backend php artisan aura:lead-approve {uuid}     # trial → approved (acesso definitivo)
+./compose.sh exec backend php artisan aura:lead-fail {uuid}        # pending/trial → failed
+./compose.sh exec backend php artisan aura:expire-trials           # expira trials vencidos
+```
+
+Status dos leads: `pending` | `trial` | `approved` | `failed`.
+
+Para expiração automática em produção, configure o scheduler do Laravel (`php artisan schedule:work` ou cron com `schedule:run`).
+
+### 6. (Opcional) Usuário municipal manual para testes
+
+Alternativa ao fluxo de lead — crie município e usuário diretamente:
 
 ```bash
 ./compose.sh exec backend php artisan tinker --execute="
@@ -114,7 +142,7 @@ echo \"Usuário criado: contador@example.com / password\n\";
 
 Login municipal: http://localhost:5173/login (senha padrão da factory: `password`).
 
-### 6. Validar que a API responde
+### 7. Validar que a API responde
 
 ```bash
 curl -s http://localhost:8000/api/health
