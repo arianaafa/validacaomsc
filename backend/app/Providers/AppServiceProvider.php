@@ -39,6 +39,7 @@ use App\Services\Msc\Rules\D1_00044Rule;
 use App\Services\Msc\Rules\D1_ControleContinuidadeRule;
 use App\Services\Msc\Rules\D1_OrcamentariaContinuidadeRule;
 use App\Services\Msc\Rules\D1_PatrimonialContinuidadeRule;
+use Illuminate\Mail\Markdown;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -162,6 +163,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Markdown::theme('audita');
     }
 }

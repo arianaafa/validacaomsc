@@ -46,6 +46,13 @@ final class StartLeadTrialCommand extends Command
         $this->line("Usuário: {$result['user']['email']}");
         $this->line("Senha temporária: {$result['temporary_password']}");
 
+        if ($result['email_sent']) {
+            $this->line("E-mail de acesso enviado para: {$result['user']['email']}");
+        } else {
+            $this->warn('Não foi possível enviar o e-mail de acesso. Verifique MAIL_* no .env e a conectividade SMTP.');
+            $this->warn('Com MAIL_MAILER=log, o conteúdo do e-mail fica em storage/logs/laravel.log.');
+        }
+
         return self::SUCCESS;
     }
 }

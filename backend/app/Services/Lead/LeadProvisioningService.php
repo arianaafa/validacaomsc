@@ -9,8 +9,12 @@ use App\Helpers\IbgeHelper;
 use App\Models\LeadRequest;
 use App\Models\Municipality;
 use App\Models\User;
+use App\Notifications\LeadTrialAccessNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Throwable;
 use Illuminate\Validation\ValidationException;
 
 final class LeadProvisioningService
@@ -30,7 +34,8 @@ final class LeadProvisioningService
      *     message: string,
      *     lead_request: array<string, mixed>,
      *     user: array{id: int, name: string, email: string},
-     *     temporary_password: string
+     *     temporary_password: string,
+     *     email_sent: bool
      * }
      */
     public function startTrial(LeadRequest $lead): array
@@ -79,6 +84,8 @@ final class LeadProvisioningService
         $lead->refresh();
         $lead->load('user');
 
+        $emailSent = $this->notifyTrialAccess($lead, $temporaryPassword);
+
         return [
             'message' => 'Acesso trial provisionado com sucesso.',
             'lead_request' => $this->formatLeadRequest($lead),
@@ -88,6 +95,7 @@ final class LeadProvisioningService
                 'email' => $user->email,
             ],
             'temporary_password' => $temporaryPassword,
+            'email_sent' => $emailSent,
         ];
     }
 
@@ -275,5 +283,23 @@ final class LeadProvisioningService
     private function trialDays(): int
     {
         return max(1, (int) config('leads.trial_days', 7));
+    }
+
+    private function notifyTrialAccess(LeadRequest $lead, string $temporaryPassword): bool
+    {
+        try {
+            Notification::route('mail', $lead->email)
+                ->notify(new LeadTrialAccessNotification($lead, $temporaryPassword));
+
+            return true;
+        } catch (Throwable $exception) {
+            Log::warning('Falha ao enviar e-mail de acesso trial.', [
+                'lead_id' => $lead->id,
+                'email' => $lead->email,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }

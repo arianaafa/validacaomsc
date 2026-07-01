@@ -8,8 +8,10 @@ use App\Enums\LeadRequestStatus;
 use App\Models\LeadRequest;
 use App\Models\Municipality;
 use App\Models\User;
+use App\Notifications\LeadTrialAccessNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -19,6 +21,8 @@ final class LeadTrialFlowTest extends TestCase
 
     public function test_superadmin_can_start_trial_from_pending_lead(): void
     {
+        Notification::fake();
+
         $admin = User::factory()->superAdmin()->create();
         $lead = LeadRequest::factory()->create();
 
@@ -29,7 +33,13 @@ final class LeadTrialFlowTest extends TestCase
         $response
             ->assertCreated()
             ->assertJsonPath('lead_request.status', 'trial')
+            ->assertJsonPath('email_sent', true)
             ->assertJsonStructure(['temporary_password', 'user' => ['email']]);
+
+        Notification::assertSentOnDemand(
+            LeadTrialAccessNotification::class,
+            fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === $lead->email,
+        );
 
         $this->assertDatabaseHas('municipalities', [
             'ibge_code' => $lead->ibge_code,

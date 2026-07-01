@@ -68,6 +68,7 @@ export interface StartLeadTrialResult {
   lead_request: AdminLeadRequest
   user: { id: number; name: string; email: string }
   temporary_password: string
+  email_sent: boolean
 }
 
 export interface LeadActionResult {

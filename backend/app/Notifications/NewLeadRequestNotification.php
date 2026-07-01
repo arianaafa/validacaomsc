@@ -46,7 +46,9 @@ final class NewLeadRequestNotification extends Notification
             $mail->line('**Mensagem:** '.$this->leadRequest->message);
         }
 
-        return $mail->line('Entre em contato para liberar o teste gratuito de 7 dias na instância dedicada.');
+        return $mail
+            ->salutation('Equipe Audita MSC · Aura Tech')
+            ->line('Entre em contato para liberar o teste gratuito de 7 dias na instância dedicada.');
     }
 
     private function resolveRoleLabel(LeadRequestRole $role): string

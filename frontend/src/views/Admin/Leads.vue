@@ -94,7 +94,9 @@ async function handleStartTrial(lead: AdminLeadRequest): Promise<void> {
     const payload = await startLeadTrial(lead.id, token)
     replaceLead(payload.lead_request)
     lastTemporaryPassword.value = payload.temporary_password
-    successMessage.value = `${payload.message} Senha temporária: ${payload.temporary_password}`
+    successMessage.value = payload.email_sent
+      ? `${payload.message} Senha temporária: ${payload.temporary_password}. E-mail enviado para ${payload.user.email}.`
+      : `${payload.message} Senha temporária: ${payload.temporary_password}. E-mail não enviado — verifique a configuração SMTP.`
   } catch (err) {
     errorMessage.value = err instanceof ApiError ? err.message : 'Não foi possível iniciar o trial.'
   } finally {

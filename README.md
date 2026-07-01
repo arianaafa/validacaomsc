@@ -105,6 +105,7 @@ Leads enviados em `/solicitar-demonstracao` ficam com status `pending`. O SuperA
 O trial:
 - cria o município (`municipalities`) a partir do IBGE/nome do lead;
 - cria o usuário municipal vinculado;
+- envia **e-mail de acesso** para o endereço cadastrado no formulário (senha temporária + link de login);
 - permite **importações ilimitadas** durante o período de teste;
 - expira em **7 dias** (`LEAD_TRIAL_DAYS`), desativando a conta automaticamente.
 
