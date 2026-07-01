@@ -163,6 +163,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Markdown::theme('audita');
+//        Markdown::theme('audita');
     }
 }
