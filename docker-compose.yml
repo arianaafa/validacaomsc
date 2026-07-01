@@ -32,26 +32,24 @@ services:
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_DATABASE: ${POSTGRES_DB:-validamsc}
-      DB_USERNAME: ${POSTGRES_USER:-msc_user}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-semsenha}
+      DB_DATABASE: ${POSTGRES_DB:-audita_msc_prod}
+      DB_USERNAME: ${POSTGRES_USER:-aura_admin}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-Aura!Tech#9Q7m$28}
     depends_on:
       postgres:
         condition: service_healthy
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
 
   nginx:
     image: nginx:1.27-alpine
     container_name: validamsc-nginx
     restart: unless-stopped
     ports:
-      - "${BACKEND_PORT:-8000}:80"
+      - "${BACKEND_PORT:-80}:80"
     volumes:
       - ./backend:/var/www/html:ro
       - ./docs/openapi:/var/www/docs/openapi:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - /dados/www/validacaomsc/frontend/dist:/usr/share/nginx/html/frontend
     depends_on:
       - backend
 
