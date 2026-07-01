@@ -22,15 +22,15 @@ const sidebarWidthClass = computed(() =>
   isSidebarCollapsed.value ? 'w-16' : 'w-64',
 )
 
-const mainOffsetClass = computed(() =>
-  isSidebarCollapsed.value ? 'md:ml-16' : 'md:ml-64',
+const mainContentOffsetClass = computed(() =>
+  isSidebarCollapsed.value ? 'md:pl-16' : 'md:pl-64',
 )
 
 const navLinkBaseClass =
-  'nav-link flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium text-zinc-400 transition-colors border-l-2 border-transparent hover:bg-zinc-800/70 hover:text-zinc-100'
+  'nav-link flex w-full items-center gap-3 rounded-lg py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-zinc-800/70 hover:text-zinc-100'
 
 const navLinkActiveClass =
-  'nav-link-active !bg-indigo-500/10 !text-indigo-100 !border-l-indigo-500'
+  'nav-link-active !bg-aura-primary/20 !text-aura-sky'
 
 async function handleLogout(): Promise<void> {
   await auth.logout()
@@ -51,7 +51,7 @@ function toggleSidebarCollapse(): void {
 </script>
 
 <template>
-  <div class="flex min-h-screen w-full">
+  <div class="min-h-screen w-full">
     <div
       v-if="isMobileMenuOpen"
       class="fixed inset-0 z-20 bg-black/50 md:hidden"
@@ -290,13 +290,11 @@ function toggleSidebarCollapse(): void {
 
     <div
       :class="[
-        'flex min-h-screen flex-1 flex-col transition-all duration-300',
-        mainOffsetClass,
+        'flex min-h-screen w-full min-w-0 flex-col transition-all duration-300',
+        mainContentOffsetClass,
       ]"
     >
-      <header
-        class="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-4 shadow-sm md:px-6"
-      >
+      <header class="flex w-full shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-6 py-4">
         <button
           type="button"
           class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 md:hidden"
@@ -323,9 +321,8 @@ function toggleSidebarCollapse(): void {
         </h1>
       </header>
 
-      <main class="flex-1 bg-slate-50 p-4 md:p-8 flex justify-center items-start">
-        <!-- Contêiner wrapper para limitar a largura máxima do formulário e centralizar -->
-        <div class="w-full max-w-7xl">
+      <main class="flex flex-1 justify-center bg-slate-50 p-4 md:p-8">
+        <div class="w-full min-w-0 max-w-7xl">
           <RouterView />
         </div>
       </main>
@@ -354,6 +351,6 @@ function toggleSidebarCollapse(): void {
 }
 
 .nav-link-active {
-  color: rgb(224 231 255);
+  color: var(--color-aura-sky);
 }
 </style>

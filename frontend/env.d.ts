@@ -41,6 +41,14 @@ declare module 'jspdf' {
     setPage(page: number): void
     getNumberOfPages(): number
     save(filename: string): void
+    addImage(
+      imageData: string,
+      format: string,
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+    ): void
   }
 }
 

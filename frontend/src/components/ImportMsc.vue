@@ -246,9 +246,9 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <section class="mx-auto w-full max-w-3xl px-4 py-8">
-    <header class="mb-8">
-      <p class="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">
+  <section class="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8">
+    <header>
+      <p class="mb-2 text-sm font-semibold uppercase tracking-wider text-aura-blue">
         MSC
       </p>
       <h1 class="text-3xl font-bold text-slate-900">Importar Planilha</h1>
@@ -257,29 +257,42 @@ async function handleSubmit(): Promise<void> {
       </p>
       <p
         v-if="validationEnvironmentLabel"
-        class="mt-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600"
+        class="mt-3 inline-flex flex-wrap items-baseline gap-x-1 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600"
       >
-        Ambiente de validação:
-        <span class="ml-1 font-semibold text-slate-800">{{ validationEnvironmentLabel }}</span>
+        <span>Ambiente de validação:</span>
+        <span class="font-semibold text-slate-800">{{ validationEnvironmentLabel }}</span>
       </p>
+    </header>
+
+    <div class="flex flex-col gap-10">
       <p
         v-if="trialNotice"
-        class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
         role="status"
       >
         {{ trialNotice }}
       </p>
-    </header>
 
-    <form class="grid gap-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm" @submit.prevent="handleSubmit">
+      <form class="grid gap-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm" @submit.prevent="handleSubmit">
       <label class="grid gap-2 text-sm font-semibold text-slate-700">
         Período
-        <input
-          v-model="periodo"
-          type="month"
-          required
-          class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base font-normal text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-        />
+        <div class="relative">
+          <input
+            v-model="periodo"
+            type="month"
+            required
+            class="period-input w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base font-normal text-slate-900 outline-none focus:border-aura-primary focus:ring-2 focus:ring-aura-primary/20"
+            :class="{ 'period-input--empty': periodo === '' }"
+          />
+          <span
+            v-if="periodo === ''"
+            class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-base font-normal text-slate-400"
+            aria-hidden="true"
+          >
+            Selecione o mês/ano
+          </span>
+        </div>
+        <span class="text-xs font-normal text-slate-500">Ex.: 06/2026</span>
       </label>
 
       <label class="grid gap-2 text-sm font-semibold text-slate-700">
@@ -287,7 +300,7 @@ async function handleSubmit(): Promise<void> {
         <select
           v-model="tipoMsc"
           required
-          class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base font-normal text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+          class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base font-normal text-slate-900 outline-none focus:border-aura-primary focus:ring-2 focus:ring-aura-primary/20"
         >
           <option v-for="option in tipoMscOptions" :key="option.value" :value="option.value">
             {{ option.label }}
@@ -314,6 +327,21 @@ async function handleSubmit(): Promise<void> {
           />
 
           <label for="msc-file-input" class="dropzone__label">
+            <svg
+              class="dropzone__icon mx-auto h-10 w-10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 16V4" />
+              <path d="m7 9 5-5 5 5" />
+              <path d="M4 20h16" />
+              <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+            </svg>
             <span class="dropzone__title">
               Arraste o arquivo .csv ou .zip aqui ou clique para selecionar
             </span>
@@ -338,7 +366,7 @@ async function handleSubmit(): Promise<void> {
       <button
         type="submit"
         :disabled="!canSubmit"
-        class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3.5 text-base font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-70"
+        class="submit-btn inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-aura-primary to-aura-sky px-4 py-3.5 text-base font-semibold text-white shadow-md shadow-aura-primary/20 transition duration-200 disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none"
       >
         <span
           v-if="isSubmitting"
@@ -352,6 +380,7 @@ async function handleSubmit(): Promise<void> {
         }}
       </button>
     </form>
+    </div>
 
     <MscValidationErrors
       v-if="validationErrors.length > 0"
@@ -366,16 +395,41 @@ async function handleSubmit(): Promise<void> {
 </template>
 
 <style scoped>
+.period-input--empty {
+  color: transparent;
+}
+
+.period-input--empty::-webkit-datetime-edit {
+  color: transparent;
+}
+
+.period-input:focus {
+  color: #0f172a;
+}
+
+.period-input:focus::-webkit-datetime-edit {
+  color: #0f172a;
+}
+
 .dropzone {
   border: 2px dashed #cbd5e1;
   border-radius: 0.75rem;
   background: #f8fafc;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dropzone:hover {
+  border-color: color-mix(in srgb, var(--color-aura-primary) 45%, #cbd5e1);
+  background: #f8fbff;
 }
 
 .dropzone--active {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: var(--color-aura-primary);
+  background: #eef4ff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-aura-primary) 15%, transparent);
 }
 
 .dropzone--filled {
@@ -383,12 +437,27 @@ async function handleSubmit(): Promise<void> {
   background: #f0fdf4;
 }
 
+.dropzone--filled:hover {
+  border-color: #15803d;
+  background: #f0fdf4;
+}
+
 .dropzone__label {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.75rem;
   padding: 2rem 1rem;
   cursor: pointer;
   text-align: center;
+}
+
+.dropzone__icon {
+  color: #94a3b8;
+  transition: color 0.2s ease;
+}
+
+.dropzone:hover .dropzone__icon,
+.dropzone--active .dropzone__icon {
+  color: var(--color-aura-primary);
 }
 
 .dropzone__title {
@@ -399,6 +468,15 @@ async function handleSubmit(): Promise<void> {
 .dropzone__filename {
   color: #0f172a;
   font-weight: 600;
+}
+
+.submit-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px -8px color-mix(in srgb, var(--color-aura-primary) 35%, transparent);
+}
+
+.submit-btn:not(:disabled):active {
+  transform: translateY(0);
 }
 
 .sr-only {
