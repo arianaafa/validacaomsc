@@ -46,7 +46,7 @@ final class NewLeadRequestNotification extends Notification
             $mail->line('**Mensagem:** '.$this->leadRequest->message);
         }
 
-        return $mail->line('Entre em contato em até 24 horas para apresentar a instância dedicada.');
+        return $mail->line('Entre em contato para liberar o teste gratuito de 7 dias na instância dedicada.');
     }
 
     private function resolveRoleLabel(LeadRequestRole $role): string

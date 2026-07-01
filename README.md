@@ -105,8 +105,8 @@ Leads enviados em `/solicitar-demonstracao` ficam com status `pending`. O SuperA
 O trial:
 - cria o município (`municipalities`) a partir do IBGE/nome do lead;
 - cria o usuário municipal vinculado;
-- permite **1 importação** de planilha;
-- expira em **24 horas** (`LEAD_TRIAL_HOURS`), desativando a conta automaticamente.
+- permite **importações ilimitadas** durante o período de teste;
+- expira em **7 dias** (`LEAD_TRIAL_DAYS`), desativando a conta automaticamente.
 
 Comandos do fluxo:
 

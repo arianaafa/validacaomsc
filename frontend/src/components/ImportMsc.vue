@@ -74,17 +74,12 @@ const trialNotice = computed((): string | null => {
   }
 
   const expiresAt = auth.user.trial_expires_at
-  const uploadsRemaining = auth.user.trial_uploads_remaining
 
   const expiryText = expiresAt
     ? ` até ${new Date(expiresAt).toLocaleString('pt-BR')}`
     : ''
 
-  const uploadText = uploadsRemaining !== null
-    ? ` Restam ${uploadsRemaining} importação(ões) de teste.`
-    : ''
-
-  return `Conta em período de teste${expiryText}.${uploadText}`
+  return `Conta em período de teste gratuito (7 dias)${expiryText}. Importações ilimitadas durante o trial.`
 })
 
 function isAllowedImportFile(file: File): boolean {

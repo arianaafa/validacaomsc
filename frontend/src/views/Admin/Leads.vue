@@ -160,7 +160,7 @@ onMounted(() => {
     <div>
       <h2 class="text-2xl font-semibold text-slate-900">Leads</h2>
       <p class="mt-1 text-sm text-slate-500">
-        Gerencie solicitações de demonstração: trial (24h, 1 importação), aprovação ou descarte.
+        Gerencie solicitações de demonstração: trial (7 dias, importações ilimitadas), aprovação ou descarte.
       </p>
       <p v-if="pendingCount > 0" class="mt-2 text-sm font-medium text-amber-700">
         {{ pendingCount }} lead(s) aguardando provisionamento.

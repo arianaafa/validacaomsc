@@ -96,20 +96,12 @@ final class AuthService
      *     municipality: array{id: int, name: string, ibge_code: string}|null,
      *     is_active: bool,
      *     is_trial: bool,
-     *     trial_expires_at: string|null,
-     *     trial_uploads_remaining: int|null
+     *     trial_expires_at: string|null
      * }
      */
     public function formatUser(User $user): array
     {
         $user->loadMissing('municipality');
-
-        $trialUploadsRemaining = null;
-
-        if ($user->isTrial()) {
-            $maxUploads = max(1, (int) config('leads.trial_max_uploads', 1));
-            $trialUploadsRemaining = max(0, $maxUploads - $user->mscUploads()->count());
-        }
 
         return [
             'id' => $user->id,
@@ -126,7 +118,6 @@ final class AuthService
             'is_active' => $user->isActive(),
             'is_trial' => $user->isTrial(),
             'trial_expires_at' => $user->trial_expires_at?->toIso8601String(),
-            'trial_uploads_remaining' => $trialUploadsRemaining,
         ];
     }
 

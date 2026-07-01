@@ -16,7 +16,7 @@ const benefits = [
   { icon: 'zap' as const, title: 'Diagnóstico rápido antes do envio' },
   { icon: 'file' as const, title: 'Compatível com PCASP' },
   { icon: 'landmark' as const, title: 'Desenvolvido para órgãos públicos' },
-  { icon: 'clock' as const, title: 'Retorno rápido para demonstração' },
+  { icon: 'clock' as const, title: 'Teste gratuito por 7 dias' },
 ]
 
 const form = reactive({
@@ -312,8 +312,8 @@ async function handleSubmit(): Promise<void> {
             </div>
             <h2 class="text-[32px] font-bold text-slate-900">Solicitação enviada!</h2>
             <p class="max-w-md text-[15px] leading-relaxed text-slate-600">
-              Obrigado pelo interesse. Nossa equipe entrará em contato em até 24 horas úteis para
-              agendar uma demonstração do Audita MSC.
+              Obrigado pelo interesse. Nossa equipe entrará em contato em breve para liberar seu
+              teste gratuito de 7 dias do Audita MSC.
             </p>
             <RouterLink
               to="/login"
@@ -331,7 +331,7 @@ async function handleSubmit(): Promise<void> {
                   Solicite uma demonstração
                 </h2>
                 <p class="mt-2 text-lg text-slate-600">
-                  Receba uma apresentação personalizada da plataforma Aura Tech.
+                  Solicite acesso e experimente o Audita MSC com teste gratuito de 7 dias.
                 </p>
               </div>
             </header>

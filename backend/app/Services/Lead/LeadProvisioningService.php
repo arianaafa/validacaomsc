@@ -49,7 +49,7 @@ final class LeadProvisioningService
 
         $temporaryPassword = Str::password(16);
         $trialStartedAt = now();
-        $trialExpiresAt = $trialStartedAt->copy()->addHours($this->trialHours());
+        $trialExpiresAt = $trialStartedAt->copy()->addDays($this->trialDays());
 
         $user = DB::transaction(function () use ($lead, $temporaryPassword, $trialStartedAt, $trialExpiresAt): User {
             $municipality = $this->resolveMunicipality($lead);
@@ -207,18 +207,6 @@ final class LeadProvisioningService
                 'file' => ['Seu período de teste expirou. Entre em contato com a equipe comercial.'],
             ]);
         }
-
-        if (! $user->isTrial()) {
-            return;
-        }
-
-        $uploadCount = $user->mscUploads()->count();
-
-        if ($uploadCount >= $this->trialMaxUploads()) {
-            throw ValidationException::withMessages([
-                'file' => ['Contas em trial permitem apenas 1 importação de planilha.'],
-            ]);
-        }
     }
 
     public function expireExpiredTrials(): int
@@ -284,13 +272,8 @@ final class LeadProvisioningService
         );
     }
 
-    private function trialHours(): int
+    private function trialDays(): int
     {
-        return max(1, (int) config('leads.trial_hours', 24));
-    }
-
-    private function trialMaxUploads(): int
-    {
-        return max(1, (int) config('leads.trial_max_uploads', 1));
+        return max(1, (int) config('leads.trial_days', 7));
     }
 }

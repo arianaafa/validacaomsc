@@ -42,7 +42,7 @@ final class LeadTrialFlowTest extends TestCase
         ]);
     }
 
-    public function test_trial_user_is_limited_to_one_upload(): void
+    public function test_trial_user_can_upload_multiple_spreadsheets(): void
     {
         $lead = LeadRequest::factory()->create();
         $admin = User::factory()->superAdmin()->create();
@@ -73,7 +73,7 @@ final class LeadTrialFlowTest extends TestCase
             'file' => $secondCsv,
             'periodo' => '2026-02',
             'tipo_msc' => 'agregada',
-        ])->assertUnprocessable();
+        ])->assertCreated();
     }
 
     public function test_expired_trial_user_is_deactivated(): void

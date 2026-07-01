@@ -15,7 +15,6 @@ export interface AuthUser {
   is_active: boolean
   is_trial: boolean
   trial_expires_at: string | null
-  trial_uploads_remaining: number | null
 }
 
 export interface AuthTokenPayload {
