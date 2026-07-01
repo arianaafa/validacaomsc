@@ -162,6 +162,10 @@ function fieldIsValid(field: FormField): boolean {
   }
 }
 
+function isLeadRequestRole(value: LeadRequestRole | ''): value is LeadRequestRole {
+  return value !== ''
+}
+
 function fieldErrorId(field: FormField): string {
   return `lead-${field}-error`
 }
@@ -188,7 +192,8 @@ async function handleSubmit(): Promise<void> {
     fieldHasError('organization_name') ||
     fieldHasError('cnpj') ||
     fieldHasError('ibge_code') ||
-    fieldHasError('role')
+    fieldHasError('role') ||
+    !isLeadRequestRole(form.role)
   ) {
     await focusFirstInvalidField()
     return

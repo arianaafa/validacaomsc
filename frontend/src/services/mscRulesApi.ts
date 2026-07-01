@@ -8,7 +8,7 @@ function buildQueryString(params: MscRulesListParams): string {
     searchParams.set('search', params.search.trim())
   }
 
-  if (params.validation_type && params.validation_type !== '') {
+  if (params.validation_type) {
     searchParams.set('validation_type', params.validation_type)
   }
 

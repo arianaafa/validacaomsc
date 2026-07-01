@@ -12,10 +12,8 @@ export class ApiError extends Error {
   }
 }
 
-type JsonBody = Record<string, string | number | boolean | null>
-
 type RequestOptions = Omit<RequestInit, 'body'> & {
-  body?: BodyInit | JsonBody | null
+  body?: BodyInit | object | null
   token?: string | null
 }
 
