@@ -57,7 +57,7 @@ services:
     container_name: validamsc-frontend
     restart: unless-stopped
     working_dir: /app
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    command: sh -c "npm install && (pkill -f 'node.*vite' 2>/dev/null || true) && sleep 1 && npm run dev -- --host 0.0.0.0 --port 5173"
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     volumes:

@@ -1,5 +1,18 @@
 /// <reference types="vite/client" />
 
+import 'vue-router'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    title?: string
+    breadcrumbParent?: string | { label: string; to?: string }
+    requiresAuth?: boolean
+    requiresSuperAdmin?: boolean
+    municipalOnly?: boolean
+    guestOnly?: boolean
+  }
+}
+
 declare module 'jspdf' {
   export class jsPDF {
     constructor(options?: {
